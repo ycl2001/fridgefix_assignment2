@@ -15,3 +15,12 @@ struct IngredientID: Hashable, Codable, Identifiable {
         rawValue
     }
 }
+
+/// Identifies a specific recipe in the local recipe collection.
+struct RecipeID: Hashable, Codable, Identifiable {
+    let rawValue: String
+
+    var id: String {
+        rawValue
+    }
+}
