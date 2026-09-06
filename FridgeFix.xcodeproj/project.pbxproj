@@ -6,13 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		3A3154F4304A49420080164E /* DomainIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3154F3304A49420080164E /* DomainIdentifiers.swift */; };
-		3A3154F6304A49AA0080164E /* PantryIngredient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3154F5304A49AA0080164E /* PantryIngredient.swift */; };
-		3A315502304A4BE60080164E /* PantryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A315501304A4BE60080164E /* PantryRepository.swift */; };
-		3A31551D304A54920080164E /* LocalPantryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A31551C304A54920080164E /* LocalPantryRepository.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		3A3154CE304A46920080164E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -34,10 +27,6 @@
 		3A3154C0304A46910080164E /* FridgeFix.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FridgeFix.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A3154CD304A46920080164E /* FridgeFixTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FridgeFixTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A3154D7304A46920080164E /* FridgeFixUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FridgeFixUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		3A3154F3304A49420080164E /* DomainIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainIdentifiers.swift; sourceTree = "<group>"; };
-		3A3154F5304A49AA0080164E /* PantryIngredient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PantryIngredient.swift; sourceTree = "<group>"; };
-		3A315501304A4BE60080164E /* PantryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PantryRepository.swift; sourceTree = "<group>"; };
-		3A31551C304A54920080164E /* LocalPantryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPantryRepository.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -54,6 +43,31 @@
 		3A3154DA304A46920080164E /* FridgeFixUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FridgeFixUITests;
+			sourceTree = "<group>";
+		};
+		3A4046CF304D4176001E2230 /* Domain */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		3A4046D3304D4182001E2230 /* Repositories */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		3A4046D6304D4184001E2230 /* Data */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Data;
+			sourceTree = "<group>";
+		};
+		3A4046D9304D4186001E2230 /* ViewModel */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		3A4046DB304D4189001E2230 /* UseCases */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UseCases;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -86,13 +100,15 @@
 		3A3154B7304A46910080164E = {
 			isa = PBXGroup;
 			children = (
-				3A3154EC304A47A40080164E /* Domain */,
+				3A4046CF304D4176001E2230 /* Domain */,
 				3A3154C2304A46910080164E /* FridgeFix */,
 				3A3154D0304A46920080164E /* FridgeFixTests */,
 				3A3154DA304A46920080164E /* FridgeFixUITests */,
 				3A3154C1304A46910080164E /* Products */,
-				3A3154FE304A4A990080164E /* Repositories */,
-				3A315515304A53E90080164E /* Data */,
+				3A4046D3304D4182001E2230 /* Repositories */,
+				3A4046D6304D4184001E2230 /* Data */,
+				3A4046D9304D4186001E2230 /* ViewModel */,
+				3A4046DB304D4189001E2230 /* UseCases */,
 			);
 			sourceTree = "<group>";
 		};
@@ -104,31 +120,6 @@
 				3A3154D7304A46920080164E /* FridgeFixUITests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		3A3154EC304A47A40080164E /* Domain */ = {
-			isa = PBXGroup;
-			children = (
-				3A3154F5304A49AA0080164E /* PantryIngredient.swift */,
-				3A3154F3304A49420080164E /* DomainIdentifiers.swift */,
-			);
-			path = Domain;
-			sourceTree = "<group>";
-		};
-		3A3154FE304A4A990080164E /* Repositories */ = {
-			isa = PBXGroup;
-			children = (
-				3A315501304A4BE60080164E /* PantryRepository.swift */,
-			);
-			path = Repositories;
-			sourceTree = "<group>";
-		};
-		3A315515304A53E90080164E /* Data */ = {
-			isa = PBXGroup;
-			children = (
-				3A31551C304A54920080164E /* LocalPantryRepository.swift */,
-			);
-			path = Data;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -148,6 +139,10 @@
 			);
 			fileSystemSynchronizedGroups = (
 				3A3154C2304A46910080164E /* FridgeFix */,
+				3A4046CF304D4176001E2230 /* Domain */,
+				3A4046D3304D4182001E2230 /* Repositories */,
+				3A4046D6304D4184001E2230 /* Data */,
+				3A4046D9304D4186001E2230 /* ViewModel */,
 			);
 			name = FridgeFix;
 			packageProductDependencies = (
@@ -275,10 +270,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A3154F4304A49420080164E /* DomainIdentifiers.swift in Sources */,
-				3A3154F6304A49AA0080164E /* PantryIngredient.swift in Sources */,
-				3A315502304A4BE60080164E /* PantryRepository.swift in Sources */,
-				3A31551D304A54920080164E /* LocalPantryRepository.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
