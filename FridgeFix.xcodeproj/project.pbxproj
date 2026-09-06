@@ -45,6 +45,31 @@
 			path = FridgeFixUITests;
 			sourceTree = "<group>";
 		};
+		3A4046CF304D4176001E2230 /* Domain */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		3A4046D3304D4182001E2230 /* Repositories */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		3A4046D6304D4184001E2230 /* Data */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Data;
+			sourceTree = "<group>";
+		};
+		3A4046D9304D4186001E2230 /* ViewModel */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		3A4046DB304D4189001E2230 /* UseCases */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UseCases;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,10 +100,15 @@
 		3A3154B7304A46910080164E = {
 			isa = PBXGroup;
 			children = (
+				3A4046CF304D4176001E2230 /* Domain */,
 				3A3154C2304A46910080164E /* FridgeFix */,
 				3A3154D0304A46920080164E /* FridgeFixTests */,
 				3A3154DA304A46920080164E /* FridgeFixUITests */,
 				3A3154C1304A46910080164E /* Products */,
+				3A4046D3304D4182001E2230 /* Repositories */,
+				3A4046D6304D4184001E2230 /* Data */,
+				3A4046D9304D4186001E2230 /* ViewModel */,
+				3A4046DB304D4189001E2230 /* UseCases */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +139,10 @@
 			);
 			fileSystemSynchronizedGroups = (
 				3A3154C2304A46910080164E /* FridgeFix */,
+				3A4046CF304D4176001E2230 /* Domain */,
+				3A4046D3304D4182001E2230 /* Repositories */,
+				3A4046D6304D4184001E2230 /* Data */,
+				3A4046D9304D4186001E2230 /* ViewModel */,
 			);
 			name = FridgeFix;
 			packageProductDependencies = (
