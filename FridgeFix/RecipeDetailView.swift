@@ -11,7 +11,9 @@ import SwiftUI
 struct RecipeDetailView: View {
 
     let recommendation: RecipeRecommendation
-    @State private var session = RecommendationSession()
+    @Binding var session: RecommendationSession
+    let onFeedbackApplied: () -> Void
+
     @State private var feedbackMessage: String?
 
     private let feedbackUseCase = ApplySessionRecipeFeedbackUseCase()
@@ -226,6 +228,7 @@ struct RecipeDetailView: View {
             )
 
             session = updatedSession
+            onFeedbackApplied()
 
             switch action {
             case .saved:

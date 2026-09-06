@@ -32,6 +32,20 @@ struct ApplySessionRecipeFeedbackUseCase {
 }
 
 /// Describes failures when recording recommendation feedback.
-enum SessionRecipeFeedbackError: Error {
+enum SessionRecipeFeedbackError: Error, Equatable, LocalizedError {
     case recommendationSessionHasEnded
+
+    var errorDescription: String? {
+        switch self {
+        case .recommendationSessionHasEnded:
+            return "This recommendation session has ended."
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .recommendationSessionHasEnded:
+            return "Start a new recommendation search before saving or reporting recipes."
+        }
+    }
 }

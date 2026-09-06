@@ -25,6 +25,16 @@ struct PantryView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        viewModel.resetAddIngredientForm()
+                        viewModel.isShowingAddIngredient = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("Add ingredient")
+                }
+
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
                         viewModel.loadPantry()
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -34,6 +44,17 @@ struct PantryView: View {
             }
             .task {
                 viewModel.loadPantry()
+            }
+            .sheet(isPresented: $viewModel.isShowingAddIngredient) {
+                AddIngredientView(viewModel: viewModel)
+            }
+            .sheet(
+                item: $viewModel.ingredientBeingEditedForExpiry
+            ) { ingredient in
+                EditExpiryDateView(
+                    ingredient: ingredient,
+                    viewModel: viewModel
+                )
             }
         }
     }
@@ -57,7 +78,12 @@ struct PantryView: View {
                     ForEach(viewModel.ingredientsExpiringSoon) { ingredient in
                         PantryIngredientRow(
                             ingredient: ingredient,
-                            isUrgent: true
+                            isUrgent: true,
+                            editExpiryDate: {
+                                viewModel.beginEditingExpiryDate(
+                                    for: ingredient
+                                )
+                            }
                         )
                     }
                 }
@@ -67,9 +93,15 @@ struct PantryView: View {
                 ForEach(viewModel.ingredients) { ingredient in
                     PantryIngredientRow(
                         ingredient: ingredient,
-                        isUrgent: ingredient.isExpiringSoon
+                        isUrgent: ingredient.isExpiringSoon,
+                        editExpiryDate: {
+                            viewModel.beginEditingExpiryDate(
+                                for: ingredient
+                            )
+                        }
                     )
                 }
+                .onDelete(perform: viewModel.removePantryIngredients)
             }
         }
     }
@@ -90,6 +122,7 @@ private struct PantryIngredientRow: View {
 
     let ingredient: PantryIngredient
     let isUrgent: Bool
+    let editExpiryDate: () -> Void
 
     var body: some View {
         HStack {
@@ -103,14 +136,144 @@ private struct PantryIngredientRow: View {
                 Text(ingredient.substitutionCategory.rawValue.capitalized)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                if let expiresAt = ingredient.expiresAt {
+                    Text("Expires \(expiresAt.formatted(date: .abbreviated, time: .omitted))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Spacer()
 
-            if isUrgent {
-                Text("Use soon")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+            VStack(alignment: .trailing, spacing: 6) {
+                if isUrgent {
+                    Text("Use soon")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+
+                Button {
+                    editExpiryDate()
+                } label: {
+                    Image(systemName: "calendar")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Edit expiry date for \(ingredient.name)")
+            }
+        }
+    }
+}
+
+/// Collects a new pantry ingredient from the user.
+private struct AddIngredientView: View {
+
+    @ObservedObject var viewModel: PantryViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Ingredient") {
+                    TextField(
+                        "Name",
+                        text: $viewModel.newIngredientName
+                    )
+
+                    Picker(
+                        "Substitution Category",
+                        selection: $viewModel.newIngredientCategory
+                    ) {
+                        ForEach(
+                            IngredientSubstitutionCategory.allCases,
+                            id: \.self
+                        ) { category in
+                            Text(category.rawValue.capitalized)
+                                .tag(category)
+                        }
+                    }
+                }
+
+                Section("Expiry") {
+                    Toggle(
+                        "Has expiry date",
+                        isOn: $viewModel.newIngredientHasExpiryDate
+                    )
+
+                    if viewModel.newIngredientHasExpiryDate {
+                        DatePicker(
+                            "Expiry Date",
+                            selection: $viewModel.newIngredientExpiryDate,
+                            displayedComponents: .date
+                        )
+                    }
+                }
+            }
+            .navigationTitle("Add Ingredient")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        viewModel.resetAddIngredientForm()
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        viewModel.addPantryIngredient()
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Updates or clears the expiry date for an existing pantry ingredient.
+private struct EditExpiryDateView: View {
+
+    let ingredient: PantryIngredient
+    @ObservedObject var viewModel: PantryViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Ingredient") {
+                    Text(ingredient.name)
+                    Text(ingredient.substitutionCategory.rawValue.capitalized)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section("Expiry") {
+                    Toggle(
+                        "Has expiry date",
+                        isOn: $viewModel.editedIngredientHasExpiryDate
+                    )
+
+                    if viewModel.editedIngredientHasExpiryDate {
+                        DatePicker(
+                            "Expiry Date",
+                            selection: $viewModel.editedIngredientExpiryDate,
+                            displayedComponents: .date
+                        )
+                    }
+                }
+            }
+            .navigationTitle("Edit Expiry")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        viewModel.cancelEditingExpiryDate()
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        viewModel.saveEditedExpiryDate()
+                        dismiss()
+                    }
+                }
             }
         }
     }
