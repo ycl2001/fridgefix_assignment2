@@ -57,8 +57,13 @@ struct RecommendationsView: View {
                         ForEach(matchingRecommendations) { recommendation in
                             NavigationLink {
                                 RecipeDetailView(
-                                    recommendation: recommendation
-                                )
+                                    recommendation: recommendation,
+                                    session: $viewModel.session
+                                ) {
+                                    viewModel.generateRecommendations(
+                                        for: context
+                                    )
+                                }
                             } label: {
                                 RecommendationCard(
                                     recommendation: recommendation

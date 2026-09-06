@@ -15,6 +15,7 @@ final class RecommendationsViewModel: ObservableObject {
     @Published private(set) var recommendations: [RecipeRecommendation] = []
     @Published private(set) var errorMessage: String?
     @Published private(set) var isLoading = false
+    @Published var session = RecommendationSession()
 
     private let recommendationUseCase:
         GenerateContextAwareRecommendationsUseCase
@@ -39,7 +40,8 @@ final class RecommendationsViewModel: ObservableObject {
 
         do {
             recommendations = try recommendationUseCase.execute(
-                context: context
+                context: context,
+                session: session
             )
         } catch RecommendationGenerationError.pantryNeedsIngredients {
             recommendations = []

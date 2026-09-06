@@ -35,6 +35,11 @@ struct RecommendationSession: Equatable {
         feedbackByRecipeID[recipeID]
     }
 
+    /// Returns every recipe feedback action recorded in this session.
+    var recordedFeedback: [RecipeID: SessionRecipeFeedbackAction] {
+        feedbackByRecipeID
+    }
+
     /// Ends the current recommendation session.
     mutating func end() {
         isActive = false

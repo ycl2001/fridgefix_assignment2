@@ -32,11 +32,14 @@ struct GenerateContextAwareRecommendationsUseCase {
     /// Generates ranked recommendations for the supplied cooking context.
     ///
     /// - Parameter context: The user's current cooking limits and preferences.
+    /// - Parameter session: Optional active session feedback used to hide skipped
+    /// recipes and adjust ordering during the current recommendation flow.
     /// - Returns: Suitable recipes ordered from highest to lowest priority.
     /// - Throws: `RecommendationGenerationError` when required data is unavailable
     /// or no recipe meets the user's hard constraints.
     func execute(
-        context: CookingContext
+        context: CookingContext,
+        session: RecommendationSession? = nil
     ) throws -> [RecipeRecommendation] {
 
         let pantry: [PantryIngredient]
@@ -59,9 +62,22 @@ struct GenerateContextAwareRecommendationsUseCase {
             throw RecommendationGenerationError.recipeCatalogueUnavailable
         }
 
+        let recipesByID = Dictionary(
+            uniqueKeysWithValues: recipes.map {
+                ($0.id, $0)
+            }
+        )
+        let sessionInfluence = SessionRecommendationInfluence(
+            session: session,
+            recipesByID: recipesByID
+        )
         var recommendations: [RecipeRecommendation] = []
 
         for recipe in recipes {
+            guard !sessionInfluence.excludes(recipe) else {
+                continue
+            }
+
             let outcome = suitabilityEvaluator.execute(
                 recipe: recipe,
                 pantry: pantry,
@@ -91,7 +107,8 @@ struct GenerateContextAwareRecommendationsUseCase {
             isHigherPriority(
                 $0,
                 than: $1,
-                context: context
+                context: context,
+                sessionInfluence: sessionInfluence
             )
         }
     }
@@ -141,10 +158,36 @@ struct GenerateContextAwareRecommendationsUseCase {
     private func isHigherPriority(
         _ first: RecipeRecommendation,
         than second: RecipeRecommendation,
-        context: CookingContext
+        context: CookingContext,
+        sessionInfluence: SessionRecommendationInfluence
     ) -> Bool {
         let firstSuitability = first.suitability
         let secondSuitability = second.suitability
+
+        let firstFeedbackRank = sessionInfluence.rank(
+            firstSuitability
+        )
+        let secondFeedbackRank = sessionInfluence.rank(
+            secondSuitability
+        )
+
+        if firstFeedbackRank != secondFeedbackRank {
+            return firstFeedbackRank > secondFeedbackRank
+        }
+
+        if sessionInfluence.prefersShorterRecipes,
+           firstSuitability.recipe.totalCookingTimeInMinutes !=
+            secondSuitability.recipe.totalCookingTimeInMinutes {
+            return firstSuitability.recipe.totalCookingTimeInMinutes <
+                secondSuitability.recipe.totalCookingTimeInMinutes
+        }
+
+        if sessionInfluence.prefersEasierRecipes,
+           firstSuitability.recipe.difficulty !=
+            secondSuitability.recipe.difficulty {
+            return firstSuitability.recipe.difficulty <
+                secondSuitability.recipe.difficulty
+        }
 
         // A minimally inconvenient urgent recipe may beat a ready recipe.
         if context.prioritisesExpiringIngredients {
@@ -248,6 +291,150 @@ struct GenerateContextAwareRecommendationsUseCase {
         case .limitedBalance:
             return 1
         }
+    }
+}
+
+/// Captures deterministic, session-only effects from prior recipe feedback.
+private struct SessionRecommendationInfluence {
+
+    private let skippedRecipeIDs: Set<RecipeID>
+    private let promotedCuisines: Set<Cuisine>
+    private let promotedTastes: Set<TastePreference>
+    private let deprioritisedCuisines: Set<Cuisine>
+    private let deprioritisedTastes: Set<TastePreference>
+    private let deprioritisesShopping: Bool
+    private let difficultRecipeThreshold: CookingDifficulty?
+
+    let prefersShorterRecipes: Bool
+    let prefersEasierRecipes: Bool
+
+    init(
+        session: RecommendationSession?,
+        recipesByID: [RecipeID: Recipe]
+    ) {
+        guard let session, session.isActive else {
+            skippedRecipeIDs = []
+            promotedCuisines = []
+            promotedTastes = []
+            deprioritisedCuisines = []
+            deprioritisedTastes = []
+            deprioritisesShopping = false
+            difficultRecipeThreshold = nil
+            prefersShorterRecipes = false
+            prefersEasierRecipes = false
+            return
+        }
+
+        var skippedRecipeIDs: Set<RecipeID> = []
+        var promotedCuisines: Set<Cuisine> = []
+        var promotedTastes: Set<TastePreference> = []
+        var deprioritisedCuisines: Set<Cuisine> = []
+        var deprioritisedTastes: Set<TastePreference> = []
+        var deprioritisesShopping = false
+        var difficultRecipeThreshold: CookingDifficulty?
+        var prefersShorterRecipes = false
+        var prefersEasierRecipes = false
+
+        for (recipeID, action) in session.recordedFeedback {
+            let recipe = recipesByID[recipeID]
+
+            switch action {
+            case .saved:
+                if let recipe {
+                    promotedCuisines.insert(recipe.cuisine)
+                    promotedTastes.formUnion(recipe.tastePreferences)
+                }
+
+            case .skipped:
+                skippedRecipeIDs.insert(recipeID)
+
+            case .reported(let reason):
+                switch reason {
+                case .tooMuchShopping:
+                    deprioritisesShopping = true
+
+                case .takesTooLong:
+                    prefersShorterRecipes = true
+
+                case .tooDifficult:
+                    prefersEasierRecipes = true
+
+                    if let recipe {
+                        difficultRecipeThreshold = min(
+                            difficultRecipeThreshold ?? recipe.difficulty,
+                            recipe.difficulty
+                        )
+                    }
+
+                case .notMyTaste:
+                    if let recipe {
+                        deprioritisedCuisines.insert(recipe.cuisine)
+                        deprioritisedTastes.formUnion(
+                            recipe.tastePreferences
+                        )
+                    }
+                }
+            }
+        }
+
+        self.skippedRecipeIDs = skippedRecipeIDs
+        self.promotedCuisines = promotedCuisines
+        self.promotedTastes = promotedTastes
+        self.deprioritisedCuisines = deprioritisedCuisines
+        self.deprioritisedTastes = deprioritisedTastes
+        self.deprioritisesShopping = deprioritisesShopping
+        self.difficultRecipeThreshold = difficultRecipeThreshold
+        self.prefersShorterRecipes = prefersShorterRecipes
+        self.prefersEasierRecipes = prefersEasierRecipes
+    }
+
+    /// Returns true when session feedback should hide the recipe.
+    func excludes(_ recipe: Recipe) -> Bool {
+        skippedRecipeIDs.contains(recipe.id)
+    }
+
+    /// Returns a deterministic feedback rank for a suitable recipe.
+    ///
+    /// Higher values appear earlier. Negative feedback wins over saved
+    /// similarity so current-session rejection remains visible in the ranking.
+    func rank(_ suitability: RecipeSuitability) -> Int {
+        if isDeprioritised(suitability) {
+            return 0
+        }
+
+        if isPromoted(suitability.recipe) {
+            return 2
+        }
+
+        return 1
+    }
+
+    private func isPromoted(_ recipe: Recipe) -> Bool {
+        promotedCuisines.contains(recipe.cuisine) ||
+        !promotedTastes.isDisjoint(with: recipe.tastePreferences)
+    }
+
+    private func isDeprioritised(
+        _ suitability: RecipeSuitability
+    ) -> Bool {
+        if deprioritisesShopping &&
+            suitability.readiness == .needsOneToTwoIngredients {
+            return true
+        }
+
+        if let difficultRecipeThreshold,
+           suitability.recipe.difficulty >= difficultRecipeThreshold {
+            return true
+        }
+
+        if deprioritisedCuisines.contains(suitability.recipe.cuisine) ||
+            !deprioritisedTastes.isDisjoint(
+                with: suitability.recipe.tastePreferences
+            ) {
+            return true
+        }
+
+        return false
     }
 }
 
