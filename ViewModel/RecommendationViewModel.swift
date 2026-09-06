@@ -24,7 +24,7 @@ final class RecommendationsViewModel: ObservableObject {
             GenerateContextAwareRecommendationsUseCase =
             GenerateContextAwareRecommendationsUseCase(
                 recipeRepository: LocalRecipeRepository(),
-                pantryRepository: LocalPantryRepository()
+                pantryRepository: LocalPantryRepository.shared
             )
     ) {
         self.recommendationUseCase = recommendationUseCase
