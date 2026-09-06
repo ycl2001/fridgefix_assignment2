@@ -7,15 +7,6 @@
 
 import Foundation
 
-/// Groups ingredients that may be valid substitutions for one another.
-enum IngredientSubstitutionCategory: String, CaseIterable, Codable, Hashable {
-    case leafyGreen
-    case aromatic
-    case protein
-    case grain
-    case cookingOil
-}
-
 /// Represents an ingredient currently available in the user's pantry.
 ///
 /// The MVP records ingredient availability and optional expiry information.
