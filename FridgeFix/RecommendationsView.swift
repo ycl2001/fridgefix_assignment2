@@ -56,7 +56,7 @@ struct RecommendationsView: View {
                     Section(readiness.displayName) {
                         ForEach(matchingRecommendations) { recommendation in
                             NavigationLink {
-                                RecommendationDetailPlaceholderView(
+                                RecipeDetailView(
                                     recommendation: recommendation
                                 )
                             } label: {
@@ -69,20 +69,6 @@ struct RecommendationsView: View {
                 }
             }
         }
-    }
-}
-
-/// Temporary destination until recipe details are introduced.
-private struct RecommendationDetailPlaceholderView: View {
-
-    let recommendation: RecipeRecommendation
-
-    var body: some View {
-        ContentUnavailableView(
-            recommendation.recipe.name,
-            systemImage: "book.pages",
-            description: Text(recommendation.suitability.explanation)
-        )
     }
 }
 
