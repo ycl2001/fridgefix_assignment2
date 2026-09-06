@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# Local Codex / developer reference
+reference/
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# Xcode build output
+DerivedData/
+build/
+Build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager build artifacts
+.build/
+.swiftpm/
+
+# Local configuration and secrets
+.env
+.env.*
+*.local
+Secrets.plist
+*.p8
+*.p12
+*.mobileprovision
+*.provisionprofile
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Nested local repositories / assignment exports
+fridgefix_assignment2/
