@@ -42,7 +42,7 @@ struct PantryView: View {
         List {
             Section {
                 NavigationLink {
-                    PantryNextStepPlaceholderView()
+                    CookingContextView()
                 } label: {
                     Label(
                         "What can I cook?",
@@ -113,18 +113,6 @@ private struct PantryIngredientRow: View {
                     .foregroundStyle(.orange)
             }
         }
-    }
-}
-
-/// Temporary destination until the cooking context feature is introduced.
-private struct PantryNextStepPlaceholderView: View {
-
-    var body: some View {
-        ContentUnavailableView(
-            "Cooking Preferences",
-            systemImage: "slider.horizontal.3",
-            description: Text("Choose cooking constraints and preferences.")
-        )
     }
 }
 
