@@ -143,6 +143,7 @@
 				3A4046D3304D4182001E2230 /* Repositories */,
 				3A4046D6304D4184001E2230 /* Data */,
 				3A4046D9304D4186001E2230 /* ViewModel */,
+				3A4046DB304D4189001E2230 /* UseCases */,
 			);
 			name = FridgeFix;
 			packageProductDependencies = (

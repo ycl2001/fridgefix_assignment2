@@ -83,7 +83,7 @@ struct CookingContextView: View {
 
                 Section {
                     NavigationLink {
-                        CookingContextNextStepPlaceholderView(
+                        RecommendationsView(
                             context: makeCookingContext()
                         )
                     } label: {
@@ -140,23 +140,6 @@ struct CookingContextView: View {
         } else {
             collection.insert(value)
         }
-    }
-}
-
-/// Temporary destination until recommendations are introduced.
-private struct CookingContextNextStepPlaceholderView: View {
-
-    let context: CookingContext
-
-    var body: some View {
-        ContentUnavailableView(
-            "Recommendations",
-            systemImage: "fork.knife",
-            description: Text(
-                "Meals will be generated from the selected cooking context."
-            )
-        )
-        .navigationTitle(context.maximumCookingTime.displayName)
     }
 }
 
