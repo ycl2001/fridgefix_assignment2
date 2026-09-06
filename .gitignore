@@ -3,6 +3,7 @@
 
 # Local Codex / developer reference
 reference/
+fridgefix_assignment2/
 
 # Xcode user state
 xcuserdata/
@@ -36,6 +37,3 @@ Secrets.plist
 *.swp
 *.swo
 *~
-
-# Nested local repositories / assignment exports
-fridgefix_assignment2/
