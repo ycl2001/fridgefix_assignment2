@@ -11,11 +11,16 @@ import SwiftUI
 struct RecipeDetailView: View {
 
     let recommendation: RecipeRecommendation
+    @State private var session = RecommendationSession()
+    @State private var feedbackMessage: String?
+
+    private let feedbackUseCase = ApplySessionRecipeFeedbackUseCase()
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 readinessSection
+                feedbackSection
                 mealInformationSection
                 ingredientsSection
                 substitutionsSection
@@ -26,6 +31,49 @@ struct RecipeDetailView: View {
         }
         .navigationTitle(recommendation.recipe.name)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var feedbackSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Your Response")
+                .font(.headline)
+
+            HStack {
+                Button {
+                    applyFeedback(.saved)
+                } label: {
+                    Label("Save", systemImage: "heart")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button {
+                    applyFeedback(.skipped)
+                } label: {
+                    Label("Skip", systemImage: "forward")
+                }
+                .buttonStyle(.bordered)
+
+                Menu {
+                    ForEach(
+                        SessionRecipeFeedbackReason.allCases,
+                        id: \.rawValue
+                    ) { reason in
+                        Button(reason.displayText) {
+                            applyFeedback(.reported(reason))
+                        }
+                    }
+                } label: {
+                    Label("Feedback", systemImage: "text.bubble")
+                }
+                .buttonStyle(.bordered)
+            }
+
+            if let feedbackMessage {
+                Text(feedbackMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     private var readinessSection: some View {
@@ -158,6 +206,39 @@ struct RecipeDetailView: View {
                     Text(instruction)
                 }
             }
+        }
+    }
+
+    private func applyFeedback(
+        _ action: SessionRecipeFeedbackAction
+    ) {
+        var updatedSession = session
+
+        let feedback = SessionRecipeFeedback(
+            recipeID: recommendation.recipe.id,
+            action: action
+        )
+
+        do {
+            try feedbackUseCase.execute(
+                feedback: feedback,
+                in: &updatedSession
+            )
+
+            session = updatedSession
+
+            switch action {
+            case .saved:
+                feedbackMessage = "Saved for this session."
+
+            case .skipped:
+                feedbackMessage = "This recipe has been skipped."
+
+            case .reported(let reason):
+                feedbackMessage = "Feedback recorded: \(reason.displayText)."
+            }
+        } catch {
+            feedbackMessage = "Feedback could not be recorded."
         }
     }
 }
