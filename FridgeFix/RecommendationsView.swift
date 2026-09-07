@@ -158,6 +158,12 @@ private struct RecipeRecommendationCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            RecipePhotoView(
+                recipe: recommendation.recipe,
+                height: 150,
+                cornerRadius: 10
+            )
+
             HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(recommendation.recipe.name)

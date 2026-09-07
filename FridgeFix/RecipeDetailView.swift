@@ -22,6 +22,12 @@ struct RecipeDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                RecipePhotoView(
+                    recipe: recommendation.recipe,
+                    height: 240,
+                    cornerRadius: 14
+                )
+
                 recipeSummarySection
                 whyThisRecipeSection
                 feedbackSection

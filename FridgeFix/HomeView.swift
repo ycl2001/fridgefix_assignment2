@@ -287,6 +287,12 @@ private struct HomeRecommendationCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            RecipePhotoView(
+                recipe: recommendation.recipe,
+                height: 140,
+                cornerRadius: 10
+            )
+
             Label(
                 recommendation.suitability.readiness.displayName,
                 systemImage: "checkmark.circle"
