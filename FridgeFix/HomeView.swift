@@ -26,8 +26,7 @@ struct HomeView: View {
                 .padding()
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("FridgeFix")
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .task {
                 pantryViewModel.loadPantry()
             }
@@ -35,15 +34,26 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("FridgeFix")
-                .font(.title2)
-                .fontWeight(.bold)
+        HStack(alignment: .center, spacing: 12) {
+            Image("fridgefix_logo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .accessibilityLabel("FridgeFix logo")
 
-            Text("Make the most of what you already have.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("FridgeFix")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("Make the most of what you already have.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var primaryDecisionEntry: some View {
@@ -166,24 +176,21 @@ struct HomeView: View {
     }
 }
 
-/// Displays the main FridgeFix meal-decision entry point.
+/// Displays the main FridgeFix meal-decision entry point as a search-shaped control.
 private struct HomePrimaryActionCard: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.title2)
+            Image(systemName: "magnifyingglass")
+                .font(.headline)
                 .foregroundStyle(.purple)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text("What can I cook?")
-                    .font(.headline)
-
-                Text("Use your pantry and current cooking context")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text("What can I cook with my pantry?")
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
 
             Spacer(minLength: 8)
 
@@ -192,9 +199,18 @@ private struct HomePrimaryActionCard: View {
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
         }
-        .padding()
+        .frame(minHeight: 48)
+        .padding(.horizontal)
+        .padding(.vertical, 10)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.purple.opacity(0.25), lineWidth: 1)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("What can I cook with my pantry?")
+        .accessibilityHint("Opens cooking context to find realistic meal options from your pantry.")
     }
 }
 
