@@ -23,6 +23,17 @@ enum RecipeReadiness: String, Codable, Equatable, Hashable {
             return "Needs 1–2 Ingredients"
         }
     }
+
+    var sectionDescription: String {
+        switch self {
+        case .readyToCook:
+            return "You have the essential ingredients or an accepted substitution."
+        case .almostReady:
+            return "One minor ingredient is missing but can be substituted."
+        case .needsOneToTwoIngredients:
+            return "A small amount of additional shopping is required."
+        }
+    }
 }
 
 /// Records a substitution accepted by a recipe's ingredient category.

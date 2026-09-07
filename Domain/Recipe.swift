@@ -37,4 +37,15 @@ enum NutritionBalance: String, CaseIterable, Codable {
     case balanced
     case partlyBalanced
     case limitedBalance
+
+    var displayName: String {
+        switch self {
+        case .balanced:
+            return "Balanced Meal"
+        case .partlyBalanced:
+            return "Partly Balanced"
+        case .limitedBalance:
+            return "Limited Balance"
+        }
+    }
 }

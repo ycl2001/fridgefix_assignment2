@@ -16,68 +16,133 @@ struct CookingContextView: View {
     @State private var preferredTastes: Set<TastePreference> = [.savoury]
     @State private var dietaryRestrictions: Set<DietaryRestriction> = []
     @State private var prioritisesExpiringIngredients = true
+    private let preferenceColumns = [
+        GridItem(.adaptive(minimum: 140), spacing: 8)
+    ]
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Cooking Limits") {
-                    Picker("Available Time", selection: $maximumCookingTime) {
+                Section {
+                    Text("Tell FridgeFix what cooking realistically looks like right now. Hard limits filter recipes; preferences only influence ranking.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section {
+                    Picker(
+                        "Total prep and cooking time",
+                        selection: $maximumCookingTime
+                    ) {
                         ForEach(CookingTimeLimit.allCases, id: \.self) { timeLimit in
                             Text(timeLimit.displayName)
                                 .tag(timeLimit)
                         }
                     }
+                } header: {
+                    ContextSectionHeader(
+                        title: "How much time do you have?",
+                        detail: "This is the total time for preparation and cooking."
+                    )
+                }
 
-                    Picker("Maximum Difficulty", selection: $maximumDifficulty) {
+                Section {
+                    Picker(
+                        "Maximum effort",
+                        selection: $maximumDifficulty
+                    ) {
                         ForEach(CookingDifficulty.allCases, id: \.self) { difficulty in
                             Text(difficulty.displayName)
                                 .tag(difficulty)
                         }
                     }
+                } header: {
+                    ContextSectionHeader(
+                        title: "How much effort suits you today?",
+                        detail: "FridgeFix excludes meals above this difficulty."
+                    )
                 }
 
-                Section("Cuisine Preferences") {
-                    ForEach(Cuisine.allCases, id: \.self) { cuisine in
-                        preferenceToggle(
-                            title: cuisine.rawValue.capitalized,
-                            isSelected: preferredCuisines.contains(cuisine)
-                        ) {
-                            toggle(cuisine, in: &preferredCuisines)
+                Section {
+                    LazyVGrid(
+                        columns: preferenceColumns,
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
+                        ForEach(Cuisine.allCases, id: \.self) { cuisine in
+                            SelectablePreferenceChip(
+                                title: cuisine.displayName,
+                                isSelected: preferredCuisines.contains(cuisine)
+                            ) {
+                                toggle(cuisine, in: &preferredCuisines)
+                            }
                         }
                     }
+                } header: {
+                    ContextSectionHeader(
+                        title: "What cuisine do you feel like?",
+                        detail: "Optional preference. Other practical meals can still appear."
+                    )
                 }
 
-                Section("Taste Preferences") {
-                    ForEach(TastePreference.allCases, id: \.self) { taste in
-                        preferenceToggle(
-                            title: taste.rawValue.capitalized,
-                            isSelected: preferredTastes.contains(taste)
-                        ) {
-                            toggle(taste, in: &preferredTastes)
+                Section {
+                    LazyVGrid(
+                        columns: preferenceColumns,
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
+                        ForEach(TastePreference.allCases, id: \.self) { taste in
+                            SelectablePreferenceChip(
+                                title: taste.displayName,
+                                isSelected: preferredTastes.contains(taste)
+                            ) {
+                                toggle(taste, in: &preferredTastes)
+                            }
                         }
                     }
+                } header: {
+                    ContextSectionHeader(
+                        title: "What flavours do you prefer?",
+                        detail: "Taste affects ranking, not whether a meal is allowed."
+                    )
                 }
 
-                Section("Dietary Restrictions") {
-                    ForEach(DietaryRestriction.allCases, id: \.self) { restriction in
-                        preferenceToggle(
-                            title: restriction.rawValue
-                                .replacingOccurrences(
-                                    of: "Free",
-                                    with: " Free"
+                Section {
+                    LazyVGrid(
+                        columns: preferenceColumns,
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
+                        ForEach(DietaryRestriction.allCases, id: \.self) { restriction in
+                            SelectablePreferenceChip(
+                                title: restriction.displayName,
+                                isSelected: dietaryRestrictions.contains(
+                                    restriction
                                 )
-                                .capitalized,
-                            isSelected: dietaryRestrictions.contains(restriction)
-                        ) {
-                            toggle(restriction, in: &dietaryRestrictions)
+                            ) {
+                                toggle(restriction, in: &dietaryRestrictions)
+                            }
                         }
                     }
+                } header: {
+                    ContextSectionHeader(
+                        title: "Any dietary requirements?",
+                        detail: "These are strict exclusions for unsuitable recipes."
+                    )
                 }
 
-                Section("Expiry Preference") {
+                Section {
                     Toggle(
                         "Prioritise ingredients expiring soon",
                         isOn: $prioritisesExpiringIngredients
+                    )
+                    Text("Practical recipes using urgent pantry ingredients may be ranked higher.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    ContextSectionHeader(
+                        title: "Expiry priority",
+                        detail: "Use what needs attention first."
                     )
                 }
 
@@ -87,12 +152,17 @@ struct CookingContextView: View {
                             context: makeCookingContext()
                         )
                     } label: {
-                        Text("Find Meals I Can Cook")
-                            .frame(maxWidth: .infinity)
+                        Label(
+                            "Find realistic meals",
+                            systemImage: "fork.knife.circle.fill"
+                        )
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .buttonStyle(.borderedProminent)
                 }
             }
-            .navigationTitle("Cooking Context")
+            .navigationTitle("Cooking Situation")
         }
     }
 
@@ -107,30 +177,6 @@ struct CookingContextView: View {
         )
     }
 
-    private func preferenceToggle(
-        title: String,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack {
-                Text(title)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                Image(
-                    systemName: isSelected
-                        ? "checkmark.circle.fill"
-                        : "circle"
-                )
-                .foregroundStyle(
-                    isSelected ? .purple : .secondary
-                )
-            }
-        }
-    }
-
     private func toggle<Value: Hashable>(
         _ value: Value,
         in collection: inout Set<Value>
@@ -140,6 +186,66 @@ struct CookingContextView: View {
         } else {
             collection.insert(value)
         }
+    }
+}
+
+/// Presents a section heading with a short domain explanation.
+private struct ContextSectionHeader: View {
+
+    let title: String
+    let detail: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textCase(nil)
+        }
+        .textCase(nil)
+    }
+}
+
+/// Displays one optional cooking preference with an accessible selected state.
+private struct SelectablePreferenceChip: View {
+
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(
+                    systemName: isSelected
+                        ? "checkmark.circle.fill"
+                        : "circle"
+                )
+                .imageScale(.small)
+
+                Text(title)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+            .font(.subheadline)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .background(
+                isSelected
+                    ? Color.purple.opacity(0.12)
+                    : Color.secondary.opacity(0.08)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(isSelected ? .purple : .primary)
+        .accessibilityLabel(title)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 }
 
