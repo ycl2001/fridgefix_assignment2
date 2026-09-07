@@ -10,12 +10,21 @@ import SwiftUI
 /// Displays the ingredients currently available in the user's pantry.
 struct PantryView: View {
 
-    @StateObject private var viewModel = PantryViewModel()
+    @ObservedObject var viewModel: PantryViewModel
+    @ObservedObject var recommendationsViewModel: RecommendationsViewModel
+
+    init(
+        viewModel: PantryViewModel,
+        recommendationsViewModel: RecommendationsViewModel
+    ) {
+        self.viewModel = viewModel
+        self.recommendationsViewModel = recommendationsViewModel
+    }
 
     var body: some View {
         NavigationStack {
             pantryContent
-            .navigationTitle("FridgeFix")
+            .navigationTitle("My Pantry")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -62,7 +71,10 @@ struct PantryView: View {
                         .foregroundStyle(.secondary)
 
                     NavigationLink {
-                        CookingContextView()
+                        CookingContextView(
+                            recommendationsViewModel:
+                                recommendationsViewModel
+                        )
                     } label: {
                         Label(
                             "What can I cook?",
@@ -131,7 +143,8 @@ struct PantryView: View {
                 }
             }
 
-            Section("All Ingredients") {
+            if !otherIngredients.isEmpty || viewModel.ingredients.isEmpty {
+                Section("Other Ingredients") {
                 if viewModel.ingredients.isEmpty {
                     ContentUnavailableView(
                         "Your Pantry Is Empty",
@@ -141,7 +154,7 @@ struct PantryView: View {
                         )
                     )
                 } else {
-                    ForEach(viewModel.ingredients) { ingredient in
+                    ForEach(otherIngredients) { ingredient in
                         PantryIngredientRow(
                             ingredient: ingredient,
                             isUrgent: ingredient.isExpiringSoon,
@@ -152,9 +165,22 @@ struct PantryView: View {
                             }
                         )
                     }
-                    .onDelete(perform: viewModel.removePantryIngredients)
+                    .onDelete { offsets in
+                        viewModel.removePantryIngredients(
+                            offsets.map {
+                                otherIngredients[$0]
+                            }
+                        )
+                    }
+                }
                 }
             }
+        }
+    }
+
+    private var otherIngredients: [PantryIngredient] {
+        viewModel.ingredients.filter {
+            !$0.isExpiringSoon
         }
     }
 }
@@ -327,5 +353,8 @@ private struct EditExpiryDateView: View {
 }
 
 #Preview {
-    PantryView()
+    PantryView(
+        viewModel: PantryViewModel(),
+        recommendationsViewModel: RecommendationsViewModel()
+    )
 }

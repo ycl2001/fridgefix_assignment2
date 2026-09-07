@@ -10,12 +10,19 @@ import SwiftUI
 /// Displays meals ranked for the user's current cooking situation.
 struct RecommendationsView: View {
 
-    let context: CookingContext
+    let context: CookingContext?
 
-    @StateObject private var viewModel = RecommendationsViewModel()
+    @ObservedObject var viewModel: RecommendationsViewModel
+
+    init(
+        context: CookingContext? = nil,
+        recommendationsViewModel: RecommendationsViewModel
+    ) {
+        self.context = context
+        self.viewModel = recommendationsViewModel
+    }
 
     var body: some View {
-        NavigationStack {
             Group {
                 if viewModel.isLoading {
                     loadingState
@@ -27,9 +34,10 @@ struct RecommendationsView: View {
             }
             .navigationTitle("Your Meal Options")
             .task {
-                viewModel.generateRecommendations(for: context)
+                if let context {
+                    viewModel.generateRecommendations(for: context)
+                }
             }
-        }
     }
 
     private var loadingState: some View {
@@ -85,9 +93,7 @@ struct RecommendationsView: View {
                                     recommendation: recommendation,
                                     session: $viewModel.session
                                 ) {
-                                    viewModel.generateRecommendations(
-                                        for: context
-                                    )
+                                    viewModel.regenerateCurrentRecommendations()
                                 }
                             } label: {
                                 RecipeRecommendationCard(
@@ -152,6 +158,12 @@ private struct RecipeRecommendationCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            RecipePhotoView(
+                recipe: recommendation.recipe,
+                height: 150,
+                cornerRadius: 10
+            )
+
             HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(recommendation.recipe.name)
