@@ -41,4 +41,19 @@ enum IngredientSubstitutionCategory: String, CaseIterable, Codable, Hashable {
     case protein
     case grain
     case cookingOil
+
+    var displayName: String {
+        switch self {
+        case .leafyGreen:
+            return "Leafy Green"
+        case .aromatic:
+            return "Aromatic"
+        case .protein:
+            return "Protein"
+        case .grain:
+            return "Grain"
+        case .cookingOil:
+            return "Cooking Oil"
+        }
+    }
 }

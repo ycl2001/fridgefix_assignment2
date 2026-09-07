@@ -14,14 +14,8 @@ struct PantryView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.hasPantryIngredients {
-                    pantryContent
-                } else {
-                    emptyPantryContent
-                }
-            }
-            .navigationTitle("My Pantry")
+            pantryContent
+            .navigationTitle("FridgeFix")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -62,19 +56,63 @@ struct PantryView: View {
     private var pantryContent: some View {
         List {
             Section {
-                NavigationLink {
-                    CookingContextView()
-                } label: {
-                    Label(
-                        "What can I cook?",
-                        systemImage: "sparkles"
-                    )
-                    .font(.headline)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("See what you can realistically cook with the ingredients you already have.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    NavigationLink {
+                        CookingContextView()
+                    } label: {
+                        Label(
+                            "What can I cook?",
+                            systemImage: "sparkles"
+                        )
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!viewModel.hasPantryIngredients)
+
+                    if !viewModel.hasPantryIngredients {
+                        Label(
+                            "Add at least one ingredient to start finding realistic meals.",
+                            systemImage: "info.circle"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+
+            if let errorMessage = viewModel.errorMessage {
+                Section("Pantry Help") {
+                    Label {
+                        Text(errorMessage)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                    }
+
+                    Button {
+                        viewModel.loadPantry()
+                    } label: {
+                        Label("Refresh pantry", systemImage: "arrow.clockwise")
+                    }
                 }
             }
 
-            if !viewModel.ingredientsExpiringSoon.isEmpty {
-                Section("Use Soon") {
+            if viewModel.ingredientsExpiringSoon.isEmpty {
+                Section {
+                    Label(
+                        "No ingredients need urgent attention today.",
+                        systemImage: "checkmark.circle"
+                    )
+                    .foregroundStyle(.secondary)
+                }
+            } else {
+                Section {
                     ForEach(viewModel.ingredientsExpiringSoon) { ingredient in
                         PantryIngredientRow(
                             ingredient: ingredient,
@@ -86,34 +124,38 @@ struct PantryView: View {
                             }
                         )
                     }
+                } header: {
+                    Label("Use Soon", systemImage: "clock.badge.exclamationmark")
+                } footer: {
+                    Text("These ingredients expire today or within the next two days.")
                 }
             }
 
             Section("All Ingredients") {
-                ForEach(viewModel.ingredients) { ingredient in
-                    PantryIngredientRow(
-                        ingredient: ingredient,
-                        isUrgent: ingredient.isExpiringSoon,
-                        editExpiryDate: {
-                            viewModel.beginEditingExpiryDate(
-                                for: ingredient
-                            )
-                        }
+                if viewModel.ingredients.isEmpty {
+                    ContentUnavailableView(
+                        "Your Pantry Is Empty",
+                        systemImage: "refrigerator",
+                        description: Text(
+                            "Add ingredients to discover meals that fit your real pantry."
+                        )
                     )
+                } else {
+                    ForEach(viewModel.ingredients) { ingredient in
+                        PantryIngredientRow(
+                            ingredient: ingredient,
+                            isUrgent: ingredient.isExpiringSoon,
+                            editExpiryDate: {
+                                viewModel.beginEditingExpiryDate(
+                                    for: ingredient
+                                )
+                            }
+                        )
+                    }
+                    .onDelete(perform: viewModel.removePantryIngredients)
                 }
-                .onDelete(perform: viewModel.removePantryIngredients)
             }
         }
-    }
-
-    private var emptyPantryContent: some View {
-        ContentUnavailableView(
-            "Your Pantry Is Empty",
-            systemImage: "refrigerator",
-            description: Text(
-                "Add ingredients to discover meals you can realistically cook."
-            )
-        )
     }
 }
 
@@ -126,14 +168,19 @@ private struct PantryIngredientRow: View {
 
     var body: some View {
         HStack {
-            Image(systemName: "leaf")
+            Image(
+                systemName: isUrgent
+                    ? "exclamationmark.triangle.fill"
+                    : "leaf.fill"
+            )
                 .foregroundStyle(isUrgent ? .orange : .green)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading) {
                 Text(ingredient.name)
                     .font(.headline)
 
-                Text(ingredient.substitutionCategory.rawValue.capitalized)
+                Text(ingredient.substitutionCategory.displayName)
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -148,7 +195,7 @@ private struct PantryIngredientRow: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 if isUrgent {
-                    Text("Use soon")
+                    Label("Use soon", systemImage: "clock")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -188,7 +235,7 @@ private struct AddIngredientView: View {
                             IngredientSubstitutionCategory.allCases,
                             id: \.self
                         ) { category in
-                            Text(category.rawValue.capitalized)
+                            Text(category.displayName)
                                 .tag(category)
                         }
                     }
@@ -240,7 +287,7 @@ private struct EditExpiryDateView: View {
             Form {
                 Section("Ingredient") {
                     Text(ingredient.name)
-                    Text(ingredient.substitutionCategory.rawValue.capitalized)
+                    Text(ingredient.substitutionCategory.displayName)
                         .foregroundStyle(.secondary)
                 }
 
