@@ -15,6 +15,7 @@ final class RecommendationsViewModel: ObservableObject {
     @Published private(set) var recommendations: [RecipeRecommendation] = []
     @Published private(set) var errorMessage: String?
     @Published private(set) var isLoading = false
+    @Published private(set) var currentContext: CookingContext?
     @Published var session = RecommendationSession()
 
     private let recommendationUseCase:
@@ -37,6 +38,7 @@ final class RecommendationsViewModel: ObservableObject {
     ) {
         isLoading = true
         errorMessage = nil
+        currentContext = context
 
         do {
             recommendations = try recommendationUseCase.execute(
@@ -80,5 +82,14 @@ final class RecommendationsViewModel: ObservableObject {
 
     var hasRecommendations: Bool {
         !recommendations.isEmpty
+    }
+
+    /// Regenerates the current meal options using the last cooking context.
+    func regenerateCurrentRecommendations() {
+        guard let currentContext else {
+            return
+        }
+
+        generateRecommendations(for: currentContext)
     }
 }

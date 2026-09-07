@@ -10,6 +10,8 @@ import SwiftUI
 /// Collects the user's current cooking limits and meal preferences.
 struct CookingContextView: View {
 
+    @ObservedObject var recommendationsViewModel: RecommendationsViewModel
+
     @State private var maximumCookingTime: CookingTimeLimit = .thirtyMinutes
     @State private var maximumDifficulty: CookingDifficulty = .moderate
     @State private var preferredCuisines: Set<Cuisine> = [.asian]
@@ -20,8 +22,11 @@ struct CookingContextView: View {
         GridItem(.adaptive(minimum: 140), spacing: 8)
     ]
 
+    init(recommendationsViewModel: RecommendationsViewModel) {
+        self.recommendationsViewModel = recommendationsViewModel
+    }
+
     var body: some View {
-        NavigationStack {
             Form {
                 Section {
                     Text("Tell FridgeFix what cooking realistically looks like right now. Hard limits filter recipes; preferences only influence ranking.")
@@ -149,7 +154,9 @@ struct CookingContextView: View {
                 Section {
                     NavigationLink {
                         RecommendationsView(
-                            context: makeCookingContext()
+                            context: makeCookingContext(),
+                            recommendationsViewModel:
+                                recommendationsViewModel
                         )
                     } label: {
                         Label(
@@ -163,7 +170,6 @@ struct CookingContextView: View {
                 }
             }
             .navigationTitle("Cooking Situation")
-        }
     }
 
     private func makeCookingContext() -> CookingContext {
@@ -250,5 +256,7 @@ private struct SelectablePreferenceChip: View {
 }
 
 #Preview {
-    CookingContextView()
+    CookingContextView(
+        recommendationsViewModel: RecommendationsViewModel()
+    )
 }

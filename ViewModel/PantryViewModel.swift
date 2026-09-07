@@ -109,6 +109,19 @@ final class PantryViewModel: ObservableObject {
         }
     }
 
+    /// Removes the supplied ingredients from the pantry.
+    func removePantryIngredients(_ ingredientsToRemove: [PantryIngredient]) {
+        do {
+            for ingredient in ingredientsToRemove {
+                try pantryRepository.removePantryIngredient(id: ingredient.id)
+            }
+
+            loadPantry()
+        } catch {
+            errorMessage = recoveryMessage(for: error)
+        }
+    }
+
     /// Updates or clears the expiry date for an existing ingredient.
     func updateExpiryDate(
         for ingredient: PantryIngredient,
