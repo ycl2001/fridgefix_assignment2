@@ -157,109 +157,145 @@ private struct RecipeRecommendationCard: View {
     let recommendation: RecipeRecommendation
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             RecipePhotoView(
                 recipe: recommendation.recipe,
-                height: 150,
+                height: 110,
                 cornerRadius: 10
             )
 
-            HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top, spacing: 8) {
                     Text(recommendation.recipe.name)
                         .font(.headline)
+                        .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 8)
 
                     RecipeReadinessBadge(
                         readiness: recommendation.suitability.readiness
                     )
                 }
 
-                Spacer(minLength: 8)
+                LazyVGrid(
+                    columns: compactFactColumns,
+                    alignment: .leading,
+                    spacing: 6
+                ) {
+                    CompactRecommendationFact(
+                        text: "\(recommendation.suitability.pantryMatchPercentage)% pantry",
+                        systemImage: "refrigerator",
+                        accessibilityLabel: "\(recommendation.suitability.pantryMatchPercentage) percent pantry match"
+                    )
 
-                NutritionBalanceLabel(
-                    nutritionBalance: recommendation.recipe.nutritionBalance
-                )
-            }
+                    CompactRecommendationFact(
+                        text: "\(recommendation.recipe.totalCookingTimeInMinutes) min",
+                        systemImage: "clock",
+                        accessibilityLabel: "\(recommendation.recipe.totalCookingTimeInMinutes) minutes total cooking time"
+                    )
 
-            Text(recommendation.suitability.explanation)
-                .font(.subheadline)
-                .fixedSize(horizontal: false, vertical: true)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Label(
-                    "\(recommendation.suitability.pantryMatchPercentage)% pantry match",
-                    systemImage: "refrigerator"
-                )
-
-                Label(
-                    "Ready in \(recommendation.recipe.totalCookingTimeInMinutes) minutes",
-                    systemImage: "clock"
-                )
-
-                Label(
-                    recommendation.recipe.difficulty.displayName,
-                    systemImage: "chart.bar"
-                )
-
-                shoppingLabel
-
-                if !recommendation.suitability.substitutions.isEmpty {
-                    Label(
-                        substitutionText,
-                        systemImage: "arrow.triangle.2.circlepath"
+                    CompactRecommendationFact(
+                        text: recommendation.recipe.difficulty.displayName,
+                        systemImage: "chart.bar",
+                        accessibilityLabel: "\(recommendation.recipe.difficulty.displayName) cooking difficulty"
                     )
                 }
 
-                if recommendation.suitability.usesUrgentIngredient {
+                Label(shoppingSummaryText, systemImage: shoppingSummaryIcon)
+                    .font(.caption)
+                    .foregroundStyle(shoppingSummaryColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .accessibilityLabel(shoppingSummaryText)
+
+                if let primaryReasonText {
                     Label(
-                        "Uses an ingredient expiring soon",
-                        systemImage: "clock.badge.exclamationmark"
+                        primaryReasonText,
+                        systemImage: primaryReasonIcon
                     )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel(primaryReasonText)
                 }
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-
-            if !recommendation.rankingReasons.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(
-                        recommendation.rankingReasons,
-                        id: \.self
-                    ) { reason in
-                        Label(reason.displayText, systemImage: "checkmark.circle")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.purple)
-            }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 
-    private var shoppingLabel: some View {
-        let missingIngredients =
-            recommendation.suitability.missingIngredients
-
-        if missingIngredients.isEmpty {
-            return Label(
-                "No extra shopping needed",
-                systemImage: "checkmark.circle"
-            )
-        }
-
-        return Label(
-            missingIngredients.count == 1
-                ? "1 ingredient needed: \(missingIngredients[0])"
-                : "\(missingIngredients.count) ingredients needed: \(missingIngredients.joined(separator: ", "))",
-            systemImage: "cart"
-        )
+    private var compactFactColumns: [GridItem] {
+        [
+            GridItem(.adaptive(minimum: 84), spacing: 8)
+        ]
     }
 
-    private var substitutionText: String {
-        recommendation.suitability.substitutions.count == 1
-            ? "Substitution available"
-            : "\(recommendation.suitability.substitutions.count) substitutions available"
+    private var shoppingSummaryText: String {
+        if recommendation.suitability.readiness == .almostReady,
+           !recommendation.suitability.substitutions.isEmpty {
+            return "Substitution available"
+        }
+
+        switch recommendation.suitability.missingIngredients.count {
+        case 0:
+            return "No shopping needed"
+        case 1:
+            return "1 ingredient needed"
+        default:
+            return "\(recommendation.suitability.missingIngredients.count) ingredients needed"
+        }
+    }
+
+    private var shoppingSummaryIcon: String {
+        if recommendation.suitability.readiness == .almostReady,
+           !recommendation.suitability.substitutions.isEmpty {
+            return "arrow.triangle.2.circlepath"
+        }
+
+        return recommendation.suitability.missingIngredients.isEmpty
+            ? "checkmark.circle"
+            : "cart"
+    }
+
+    private var shoppingSummaryColor: Color {
+        recommendation.suitability.missingIngredients.isEmpty ? .secondary : .orange
+    }
+
+    private var primaryReasonText: String? {
+        if recommendation.suitability.usesUrgentIngredient,
+           recommendation.rankingReasons.first != .usesIngredientExpiringSoon {
+            return RecommendationReason.usesIngredientExpiringSoon.displayText
+        }
+
+        return recommendation.rankingReasons.first?.displayText
+    }
+
+    private var primaryReasonIcon: String {
+        primaryReasonText == RecommendationReason.usesIngredientExpiringSoon.displayText
+            ? "clock.badge.exclamationmark"
+            : "checkmark.circle"
+    }
+}
+
+/// Shows one compact recommendation fact without expanding the result card.
+private struct CompactRecommendationFact: View {
+
+    let text: String
+    let systemImage: String
+    let accessibilityLabel: String
+
+    var body: some View {
+        Label {
+            Text(text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        } icon: {
+            Image(systemName: systemImage)
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 
