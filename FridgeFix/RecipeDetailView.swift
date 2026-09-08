@@ -37,7 +37,7 @@ struct RecipeDetailView: View {
             }
             .containerRelativeFrame(.horizontal)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(FridgeFixTheme.pageBackground)
         .navigationTitle("Recipe")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -76,7 +76,7 @@ struct RecipeDetailView: View {
         .padding(.top, 12)
         .padding(.bottom, 24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground))
+        .background(FridgeFixTheme.cardBackground)
         .clipShape(
             UnevenRoundedRectangle(
                 topLeadingRadius: 24,
@@ -97,6 +97,7 @@ struct RecipeDetailView: View {
 
             Text(recommendation.recipe.name)
                 .font(.title2)
+                .fontDesign(.rounded)
                 .fontWeight(.bold)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -116,7 +117,7 @@ struct RecipeDetailView: View {
                 )
             }
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
 
             Text(recommendation.suitability.explanation)
                 .font(.subheadline)
@@ -250,7 +251,7 @@ struct RecipeDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Feedback changes options for this cooking session only.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 8) {
@@ -269,7 +270,7 @@ struct RecipeDetailView: View {
                 if let feedbackMessage {
                     Label(feedbackMessage, systemImage: "checkmark.circle")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -476,7 +477,7 @@ private struct DetailSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.headline)
+                .fridgeFixSectionTitle()
 
             content()
         }
@@ -507,13 +508,18 @@ private struct SuitabilityIndicator: View {
 
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(7)
         .frame(minHeight: 68)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(FridgeFixTheme.pageBackground)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: FridgeFixTheme.compactCornerRadius,
+                style: .continuous
+            )
+        )
         .accessibilityElement(children: .combine)
     }
 }
@@ -528,6 +534,7 @@ private struct IngredientGroup<Content: View>: View {
         VStack(alignment: .leading, spacing: 9) {
             Text(title)
                 .font(.subheadline)
+                .fontDesign(.rounded)
                 .fontWeight(.semibold)
 
             content()
@@ -582,7 +589,7 @@ private struct RecommendationReasonRow: View {
     var body: some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -609,14 +616,19 @@ private struct IngredientAvailabilityRow: View {
 
                 Text(detail)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(FridgeFixTheme.pageBackground)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: FridgeFixTheme.compactCornerRadius,
+                style: .continuous
+            )
+        )
     }
 }
 

@@ -17,15 +17,18 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: FridgeFixTheme.sectionSpacing) {
                     header
                     primaryDecisionEntry
                     forYouSection
                     useSoonSection
                 }
-                .padding()
+                .padding(FridgeFixTheme.screenPadding)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(FridgeFixTheme.pageBackground)
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 16)
+            }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
             .task {
@@ -44,13 +47,11 @@ struct HomeView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("FridgeFix")
-                    .font(.title2)
-                    .fontDesign(.rounded)
-                    .fontWeight(.bold)
+                    .fridgeFixScreenTitle()
 
                 Text("Make the most of what you already have.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -81,7 +82,7 @@ struct HomeView: View {
     private var forYouSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("For You")
-                .font(.headline)
+                .fridgeFixSectionTitle()
 
             if recommendationsViewModel.isLoading {
                 HomeLoadingCard()
@@ -132,7 +133,7 @@ struct HomeView: View {
     private var useSoonSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Use Soon")
-                .font(.headline)
+                .fridgeFixSectionTitle()
 
             if let errorMessage = pantryViewModel.errorMessage {
                 HomeMessageCard(
@@ -183,12 +184,12 @@ private struct HomePrimaryActionCard: View {
         HStack(alignment: .center, spacing: 12) {
             Image(systemName: "magnifyingglass")
                 .font(.headline)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(FridgeFixTheme.brandAccent)
                 .accessibilityHidden(true)
 
             Text("What can I cook?")
-                .font(.headline)
-                .fontDesign(.rounded)
+                .fridgeFixPrimaryActionTitle()
+                .foregroundStyle(FridgeFixTheme.primaryText)
                 .lineLimit(1)
 
             Spacer(minLength: 8)
@@ -198,11 +199,11 @@ private struct HomePrimaryActionCard: View {
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, FridgeFixTheme.cardPadding)
         .padding(.vertical, 10)
-        .frame(minHeight: 48)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .frame(minHeight: FridgeFixTheme.compactActionHeight)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.compactCornerRadius))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("What can I cook?")
         .accessibilityHint("Starts context-aware meal recommendations using your pantry.")
@@ -221,22 +222,22 @@ private struct HomeEmptyPantryCard: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Add pantry ingredients first")
-                    .font(.headline)
+                    .fridgeFixCardTitle()
 
                 Text("Add a few pantry ingredients before finding meal options.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 Label("Open Pantry", systemImage: "cabinet")
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(FridgeFixTheme.brandAccent)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(FridgeFixTheme.cardPadding)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.cardCornerRadius))
     }
 }
 
@@ -249,12 +250,12 @@ private struct HomeLoadingCard: View {
 
             Text("Finding realistic meal options...")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(FridgeFixTheme.cardPadding)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.cardCornerRadius))
     }
 }
 
@@ -271,21 +272,21 @@ private struct HomeNoRecommendationsCard: View {
         } label: {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Find realistic meal options", systemImage: "fork.knife")
-                    .font(.headline)
+                    .fridgeFixCardTitle()
 
                 Text("Tell FridgeFix how much time you have and what you feel like eating.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 Text("Get recommendations")
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(FridgeFixTheme.brandAccent)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .padding(FridgeFixTheme.cardPadding)
+            .background(FridgeFixTheme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.cardCornerRadius))
         }
         .buttonStyle(.plain)
     }
@@ -301,20 +302,26 @@ private struct HomeRecommendationCard: View {
             RecipePhotoView(
                 recipe: recommendation.recipe,
                 height: 140,
-                cornerRadius: 10
+                cornerRadius: FridgeFixTheme.compactCornerRadius
             )
 
             Label(
                 recommendation.suitability.readiness.displayName,
-                systemImage: "checkmark.circle"
+                systemImage: readinessIcon
             )
             .font(.caption)
             .fontWeight(.semibold)
-            .foregroundStyle(.purple)
+            .foregroundStyle(readinessColor)
 
             Text(recommendation.recipe.name)
-                .font(.headline)
+                .fridgeFixCardTitle()
                 .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(recommendation.suitability.explanation)
+                .font(.caption)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
+                .lineLimit(3, reservesSpace: true)
                 .fixedSize(horizontal: false, vertical: true)
 
             Label(
@@ -329,17 +336,47 @@ private struct HomeRecommendationCard: View {
 
             if !recommendation.suitability.missingIngredients.isEmpty {
                 Label(
-                    "\(recommendation.suitability.missingIngredients.count) ingredient needed",
+                    missingShoppingText,
                     systemImage: "cart"
                 )
+                .foregroundStyle(.orange)
             }
         }
         .font(.caption)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(FridgeFixTheme.secondaryText)
         .frame(width: 220, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(FridgeFixTheme.cardPadding)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.cardCornerRadius))
+    }
+
+    private var readinessIcon: String {
+        switch recommendation.suitability.readiness {
+        case .readyToCook:
+            return "checkmark.circle.fill"
+        case .almostReady:
+            return "arrow.triangle.2.circlepath.circle.fill"
+        case .needsOneToTwoIngredients:
+            return "cart.circle.fill"
+        }
+    }
+
+    private var readinessColor: Color {
+        switch recommendation.suitability.readiness {
+        case .readyToCook:
+            return .green
+        case .almostReady:
+            return FridgeFixTheme.brandAccent
+        case .needsOneToTwoIngredients:
+            return .orange
+        }
+    }
+
+    private var missingShoppingText: String {
+        let missingIngredientCount = recommendation.suitability.missingIngredients.count
+        return missingIngredientCount == 1
+            ? "1 ingredient needed"
+            : "\(missingIngredientCount) ingredients needed"
     }
 }
 
@@ -362,7 +399,7 @@ private struct HomeUrgentIngredientRow<Action: View>: View {
 
                 Text(expiryDescription)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 Text("Use soon")
                     .font(.caption)
@@ -372,10 +409,13 @@ private struct HomeUrgentIngredientRow<Action: View>: View {
             Spacer(minLength: 8)
 
             action()
+                .font(.subheadline)
+                .fontDesign(.rounded)
+                .fontWeight(.semibold)
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(FridgeFixTheme.cardPadding)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.cardCornerRadius))
     }
 
     private var expiryDescription: String {
@@ -398,11 +438,11 @@ private struct HomeMessageCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label(title, systemImage: systemImage)
-                .font(.headline)
+                .fridgeFixCardTitle()
 
             Text(message)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
 
             if let action {
                 Button {
@@ -414,9 +454,9 @@ private struct HomeMessageCard: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(FridgeFixTheme.cardPadding)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.cardCornerRadius))
     }
 }
 

@@ -31,7 +31,7 @@ struct CookingContextView: View {
                 Section {
                     Text("Tell FridgeFix what cooking realistically looks like right now. Hard limits filter recipes; preferences only influence ranking.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                 }
 
                 Section {
@@ -143,7 +143,7 @@ struct CookingContextView: View {
                     )
                     Text("Practical recipes using urgent pantry ingredients may be ranked higher.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                 } header: {
                     ContextSectionHeader(
                         title: "Expiry priority",
@@ -163,13 +163,16 @@ struct CookingContextView: View {
                             "Find realistic meals",
                             systemImage: "fork.knife.circle.fill"
                         )
-                        .font(.headline)
+                        .fridgeFixPrimaryActionTitle()
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.borderedProminent)
                 }
+                .listRowBackground(FridgeFixTheme.cardBackground)
             }
             .navigationTitle("Cooking Situation")
+            .scrollContentBackground(.hidden)
+            .background(FridgeFixTheme.pageBackground)
     }
 
     private func makeCookingContext() -> CookingContext {
@@ -204,12 +207,12 @@ private struct ContextSectionHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.headline)
+                .fridgeFixSectionTitle()
                 .foregroundStyle(.primary)
 
             Text(detail)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
                 .textCase(nil)
         }
         .textCase(nil)
@@ -243,13 +246,13 @@ private struct SelectablePreferenceChip: View {
             .padding(.horizontal, 10)
             .background(
                 isSelected
-                    ? Color.purple.opacity(0.12)
-                    : Color.secondary.opacity(0.08)
+                    ? FridgeFixTheme.brandAccent.opacity(0.14)
+                    : FridgeFixTheme.cardBackground
             )
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.compactCornerRadius))
         }
         .buttonStyle(.plain)
-        .foregroundStyle(isSelected ? .purple : .primary)
+        .foregroundStyle(isSelected ? FridgeFixTheme.brandAccent : .primary)
         .accessibilityLabel(title)
         .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
