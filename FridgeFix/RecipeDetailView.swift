@@ -24,8 +24,8 @@ struct RecipeDetailView: View {
             VStack(alignment: .leading, spacing: 24) {
                 RecipePhotoView(
                     recipe: recommendation.recipe,
-                    height: 240,
-                    cornerRadius: 14
+                    height: 250,
+                    cornerRadius: 22
                 )
 
                 recipeSummarySection
@@ -34,8 +34,12 @@ struct RecipeDetailView: View {
                 ingredientsSection
                 instructionsSection
             }
-            .padding()
+            .padding(.horizontal, 18)
+            .padding(.top, 16)
+            .padding(.bottom, 28)
         }
+        .background(FridgeFixTheme.pageBackground)
+        .tint(FridgeFixTheme.primaryAccent)
         .navigationTitle(recommendation.recipe.name)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -47,7 +51,7 @@ struct RecipeDetailView: View {
 
             Text("Feedback changes options for this cooking session only.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
 
             HStack(spacing: 10) {
                 Button {
@@ -83,9 +87,12 @@ struct RecipeDetailView: View {
             if let feedbackMessage {
                 Label(feedbackMessage, systemImage: "checkmark.circle")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
             }
         }
+        .padding()
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var recipeSummarySection: some View {
@@ -93,7 +100,7 @@ struct RecipeDetailView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "fork.knife.circle.fill")
                     .font(.system(size: 44))
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(FridgeFixTheme.primaryAccent)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -113,6 +120,11 @@ struct RecipeDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 8) {
+                Label(
+                    "\(recommendation.suitability.pantryMatchPercentage)% pantry match",
+                    systemImage: "refrigerator"
+                )
+
                 Label(
                     "Ready in \(recommendation.recipe.totalCookingTimeInMinutes) minutes",
                     systemImage: "clock"
@@ -141,8 +153,11 @@ struct RecipeDetailView: View {
                 )
             }
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
         }
+        .padding()
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var whyThisRecipeSection: some View {
@@ -154,6 +169,9 @@ struct RecipeDetailView: View {
                 RecommendationReasonRow(text: reason)
             }
         }
+        .padding()
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var ingredientsSection: some View {
@@ -194,7 +212,7 @@ struct RecipeDetailView: View {
                             title: substitution.requiredIngredient,
                             detail: "\(substitution.requiredIngredient) → \(substitution.availableIngredient) available as a \(substitution.category.displayName.lowercased()) substitution",
                             systemImage: "arrow.triangle.2.circlepath.circle.fill",
-                            tint: .purple
+                            tint: FridgeFixTheme.primaryAccent
                         )
                     }
                 }
@@ -214,12 +232,15 @@ struct RecipeDetailView: View {
                             title: ingredient,
                             detail: "Needed before cooking this meal",
                             systemImage: "cart.circle.fill",
-                            tint: .orange
+                            tint: FridgeFixTheme.urgentAccent
                         )
                     }
                 }
             }
         }
+        .padding()
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var instructionsSection: some View {
@@ -241,6 +262,9 @@ struct RecipeDetailView: View {
                 }
             }
         }
+        .padding()
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private func applyFeedback(
@@ -387,9 +411,9 @@ private struct DetailRecipeReadinessBadge: View {
         case .readyToCook:
             return .green
         case .almostReady:
-            return .purple
+            return FridgeFixTheme.primaryAccent
         case .needsOneToTwoIngredients:
-            return .orange
+            return FridgeFixTheme.urgentAccent
         }
     }
 }
@@ -402,7 +426,7 @@ private struct RecommendationReasonRow: View {
     var body: some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -428,7 +452,7 @@ private struct IngredientAvailabilityRow: View {
 
                 Text(detail)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

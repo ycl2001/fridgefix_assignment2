@@ -33,6 +33,7 @@ struct RecommendationsView: View {
                 }
             }
             .navigationTitle("Your Meal Options")
+            .background(FridgeFixTheme.pageBackground)
             .task {
                 if let context {
                     viewModel.generateRecommendations(for: context)
@@ -47,7 +48,7 @@ struct RecommendationsView: View {
                 .font(.headline)
             Text("Checking your pantry, available time, preferences, and cooking constraints.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }
@@ -59,17 +60,18 @@ struct RecommendationsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Ranked using your pantry, available time, preferences, and cooking constraints.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
 
                     Label(
                         "Use Back to adjust your cooking situation.",
                         systemImage: "slider.horizontal.3"
                     )
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                 }
                 .padding(.vertical, 4)
             }
+            .listRowBackground(Color.clear)
 
             ForEach(
                 [
@@ -100,19 +102,22 @@ struct RecommendationsView: View {
                                     recommendation: recommendation
                                 )
                             }
+                            .listRowBackground(Color.clear)
                         }
                     } header: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(readiness.displayName)
                             Text(readiness.sectionDescription)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(FridgeFixTheme.secondaryText)
                                 .textCase(nil)
                         }
                     }
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(FridgeFixTheme.pageBackground)
     }
 
     private func recommendationUnavailableState(
@@ -145,7 +150,7 @@ struct RecommendationsView: View {
                 )
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
             .multilineTextAlignment(.leading)
         }
     }
@@ -161,19 +166,17 @@ private struct RecipeRecommendationCard: View {
             RecipePhotoView(
                 recipe: recommendation.recipe,
                 height: 150,
-                cornerRadius: 10
+                cornerRadius: 12
             )
 
-            HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(recommendation.recipe.name)
-                        .font(.headline)
-                        .fixedSize(horizontal: false, vertical: true)
+            Text(recommendation.recipe.name)
+                .font(.headline)
+                .fixedSize(horizontal: false, vertical: true)
 
-                    RecipeReadinessBadge(
-                        readiness: recommendation.suitability.readiness
-                    )
-                }
+            HStack(alignment: .top, spacing: 8) {
+                RecipeReadinessBadge(
+                    readiness: recommendation.suitability.readiness
+                )
 
                 Spacer(minLength: 8)
 
@@ -219,7 +222,7 @@ private struct RecipeRecommendationCard: View {
                 }
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
 
             if !recommendation.rankingReasons.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
@@ -231,10 +234,12 @@ private struct RecipeRecommendationCard: View {
                     }
                 }
                 .font(.caption)
-                .foregroundStyle(.purple)
+                .foregroundStyle(FridgeFixTheme.primaryAccent)
             }
         }
-        .padding(.vertical, 8)
+        .padding(12)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
     private var shoppingLabel: some View {
@@ -291,9 +296,9 @@ private struct RecipeReadinessBadge: View {
         case .readyToCook:
             return .green
         case .almostReady:
-            return .purple
+            return FridgeFixTheme.primaryAccent
         case .needsOneToTwoIngredients:
-            return .orange
+            return FridgeFixTheme.urgentAccent
         }
     }
 }
@@ -306,7 +311,7 @@ private struct NutritionBalanceLabel: View {
     var body: some View {
         Label(nutritionBalance.displayName, systemImage: iconName)
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
             .labelStyle(.iconOnly)
             .accessibilityLabel(nutritionBalance.displayName)
     }

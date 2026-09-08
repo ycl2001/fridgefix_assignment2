@@ -43,6 +43,7 @@ struct ContentView: View {
             }
             .tag(FridgeFixTab.recipes)
         }
+        .tint(FridgeFixTheme.primaryAccent)
     }
 }
 
