@@ -78,8 +78,8 @@ private struct RecipesTabView: View {
                         )
                     } label: {
                         Label(
-                            "Set my cooking context",
-                            systemImage: "slider.horizontal.3"
+                            "What can I cook?",
+                            systemImage: "sparkles"
                         )
                     }
                     .buttonStyle(.borderedProminent)

@@ -75,6 +75,23 @@ struct RecommendationsView: View {
     private var recommendationList: some View {
         List {
             Section {
+                NavigationLink {
+                    CookingContextView(
+                        recommendationsViewModel: viewModel
+                    )
+                } label: {
+                    Label("What can I cook?", systemImage: "sparkles")
+                        .fridgeFixPrimaryActionTitle()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityHint(
+                    "Starts a new cooking-context flow for meal recommendations."
+                )
+            }
+            .listRowBackground(FridgeFixTheme.cardBackground)
+
+            Section {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Ranked using your pantry, available time, preferences, and cooking constraints.")
                         .font(.subheadline)

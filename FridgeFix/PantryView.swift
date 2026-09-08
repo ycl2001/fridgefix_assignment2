@@ -58,7 +58,7 @@ struct PantryView: View {
                     }
                 )
 
-                cookAction
+                PantrySearchField(searchText: $viewModel.searchText)
 
                 if let errorMessage = viewModel.errorMessage {
                     PantryDashboardMessage(
@@ -73,8 +73,11 @@ struct PantryView: View {
                     )
                 }
 
-                if viewModel.ingredients.isEmpty {
+                if viewModel.ingredients.isEmpty &&
+                    !viewModel.hasActiveFilters {
                     emptyPantryCard
+                } else if viewModel.ingredients.isEmpty {
+                    filteredEmptyPantryCard
                 } else {
                     PantryDashboard(
                         featuredIngredient: viewModel.featuredIngredient,
@@ -87,8 +90,6 @@ struct PantryView: View {
                             viewModel.beginEditingExpiryDate(for: ingredient)
                         }
                     )
-
-                    PantrySearchField(searchText: $viewModel.searchText)
 
                     ingredientCardsSection
                 }
@@ -103,39 +104,6 @@ struct PantryView: View {
         }
     }
 
-    private var cookAction: some View {
-        NavigationLink {
-            CookingContextView(
-                recommendationsViewModel: recommendationsViewModel
-            )
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "sparkles")
-                    .accessibilityHidden(true)
-
-                Text("What can I cook?")
-                    .fridgeFixPrimaryActionTitle()
-                    .lineLimit(1)
-
-                Spacer(minLength: 8)
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 14)
-            .frame(minHeight: FridgeFixTheme.compactActionHeight)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-        .disabled(!viewModel.hasPantryIngredients)
-        .accessibilityHint(
-            viewModel.hasPantryIngredients
-                ? "Starts meal recommendations using your pantry."
-                : "Add an ingredient before starting meal recommendations."
-        )
-    }
-
     private var emptyPantryCard: some View {
         PantryDashboardMessage(
             message: "Add a few pantry ingredients before FridgeFix can recommend realistic meals.",
@@ -145,6 +113,19 @@ struct PantryView: View {
             actionSystemImage: "plus",
             action: {
                 viewModel.isShowingAddIngredient = true
+            }
+        )
+    }
+
+    private var filteredEmptyPantryCard: some View {
+        PantryDashboardMessage(
+            message: "No pantry ingredients match this search.",
+            systemImage: "magnifyingglass",
+            tint: FridgeFixTheme.secondaryText,
+            actionTitle: "Clear search",
+            actionSystemImage: "xmark.circle",
+            action: {
+                viewModel.clearFilters()
             }
         )
     }
@@ -517,13 +498,20 @@ private struct PantrySearchField: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(FridgeFixTheme.secondaryText)
+                .foregroundStyle(FridgeFixTheme.brandAccent)
                 .accessibilityHidden(true)
 
-            TextField("Search your pantry", text: $searchText)
+            TextField(
+                "Search your pantry",
+                text: $searchText,
+                prompt: Text("Search your pantry")
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
+            )
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.search)
+                .foregroundStyle(FridgeFixTheme.primaryText)
+                .tint(FridgeFixTheme.brandAccent)
                 .accessibilityLabel("Search your pantry")
 
             if !searchText.isEmpty {
@@ -537,8 +525,8 @@ private struct PantrySearchField: View {
                 .accessibilityLabel("Clear pantry search")
             }
         }
-        .padding(.horizontal, 12)
-        .frame(minHeight: 42)
+        .padding(.horizontal, 14)
+        .frame(minHeight: 52)
         .background(FridgeFixTheme.cardBackground)
         .clipShape(
             RoundedRectangle(
