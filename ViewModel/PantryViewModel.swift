@@ -56,6 +56,27 @@ final class PantryViewModel: ObservableObject {
         ingredients.filter { $0.isExpiringSoon }
     }
 
+    /// Returns the ingredient highlighted in the pantry dashboard.
+    var featuredIngredient: PantryIngredient? {
+        if let urgentIngredient = ingredientsExpiringSoon
+            .sorted(by: { first, second in
+                guard let firstExpiry = first.expiresAt else {
+                    return false
+                }
+
+                guard let secondExpiry = second.expiresAt else {
+                    return true
+                }
+
+                return firstExpiry < secondExpiry
+            })
+            .first {
+            return urgentIngredient
+        }
+
+        return ingredients.first
+    }
+
     /// Returns pantry ingredients matching the current search and category filters.
     var visibleIngredients: [PantryIngredient] {
         ingredients.filter { ingredient in
@@ -71,6 +92,15 @@ final class PantryViewModel: ObservableObject {
     /// Returns visible ingredients that are not already represented as urgent.
     var visibleOtherIngredients: [PantryIngredient] {
         visibleIngredients.filter { !$0.isExpiringSoon }
+    }
+
+    /// Returns visible pantry ingredients excluding the dashboard feature.
+    var visibleIngredientsExcludingFeatured: [PantryIngredient] {
+        guard let featuredIngredient else {
+            return visibleIngredients
+        }
+
+        return visibleIngredients.filter { $0.id != featuredIngredient.id }
     }
 
     /// Returns ingredient categories currently represented in the pantry.
@@ -256,9 +286,7 @@ final class PantryViewModel: ObservableObject {
 
         return ingredient.name.localizedCaseInsensitiveContains(
             trimmedSearchText
-        ) ||
-        ingredient.substitutionCategory.displayName
-            .localizedCaseInsensitiveContains(trimmedSearchText)
+        )
     }
 
     private func matchesSelectedCategory(

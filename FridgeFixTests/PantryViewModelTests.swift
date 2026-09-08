@@ -22,6 +22,38 @@ struct PantryViewModelTests {
     }
 
     @Test
+    func urgentIngredientBecomesFeaturedIngredient() {
+        let viewModel = makeViewModel()
+
+        #expect(viewModel.featuredIngredient?.name == "Spinach")
+    }
+
+    @Test
+    func nonUrgentFallbackIsFeaturedWhenNoIngredientIsUrgent() {
+        let viewModel = PantryViewModel(
+            pantryRepository: StubPantryRepository(
+                ingredients: [
+                    PantryIngredient(
+                        id: IngredientID(rawValue: "rice"),
+                        name: "Rice",
+                        substitutionCategory: .grain,
+                        expiresAt: nil
+                    ),
+                    PantryIngredient(
+                        id: IngredientID(rawValue: "chicken"),
+                        name: "Chicken",
+                        substitutionCategory: .protein,
+                        expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 5)
+                    )
+                ]
+            )
+        )
+        viewModel.loadPantry()
+
+        #expect(viewModel.featuredIngredient?.name == "Rice")
+    }
+
+    @Test
     func categoryFilteringReturnsOnlyMatchingIngredients() {
         let viewModel = makeViewModel()
 
@@ -51,6 +83,17 @@ struct PantryViewModelTests {
         #expect(viewModel.searchText.isEmpty)
         #expect(viewModel.selectedCategory == nil)
         #expect(viewModel.visibleIngredients.map(\.name) == pantryIngredients.map(\.name))
+    }
+
+    @Test
+    func featuredIngredientIsNotDuplicatedInVisibleIngredientCards() {
+        let viewModel = makeViewModel()
+
+        #expect(viewModel.featuredIngredient?.name == "Spinach")
+        #expect(viewModel.visibleIngredientsExcludingFeatured.map(\.name) == [
+            "Rice",
+            "Chicken"
+        ])
     }
 
     @Test
