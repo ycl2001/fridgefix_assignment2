@@ -24,223 +24,608 @@ struct PantryView: View {
     var body: some View {
         NavigationStack {
             pantryContent
-            .navigationTitle("My Pantry")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        viewModel.resetAddIngredientForm()
-                        viewModel.isShowingAddIngredient = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("Add ingredient")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(.hidden, for: .navigationBar)
+                .task {
+                    viewModel.loadPantry()
                 }
-
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        viewModel.loadPantry()
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                    .accessibilityLabel("Refresh pantry")
+                .fullScreenCover(isPresented: $viewModel.isShowingAddIngredient) {
+                    AddPantryIngredientView(
+                        viewModel: viewModel.makeAddPantryIngredientViewModel()
+                    )
                 }
-            }
-            .task {
-                viewModel.loadPantry()
-            }
-            .sheet(isPresented: $viewModel.isShowingAddIngredient) {
-                AddIngredientView(viewModel: viewModel)
-            }
-            .sheet(
-                item: $viewModel.ingredientBeingEditedForExpiry
-            ) { ingredient in
-                EditExpiryDateView(
-                    ingredient: ingredient,
-                    viewModel: viewModel
-                )
-            }
-            .background(FridgeFixTheme.pageBackground)
+                .sheet(
+                    item: $viewModel.ingredientBeingEditedForExpiry
+                ) { ingredient in
+                    EditExpiryDateView(
+                        ingredient: ingredient,
+                        viewModel: viewModel
+                    )
+                }
+                .background(FridgeFixTheme.pageBackground)
         }
     }
 
     private var pantryContent: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("See what you can realistically cook with the ingredients you already have.")
-                        .font(.subheadline)
-                        .foregroundStyle(FridgeFixTheme.secondaryText)
-
-                    NavigationLink {
-                        CookingContextView(
-                            recommendationsViewModel:
-                                recommendationsViewModel
-                        )
-                    } label: {
-                        Label(
-                            "What can I cook?",
-                            systemImage: "sparkles"
-                        )
-                        .fridgeFixPrimaryActionTitle()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!viewModel.hasPantryIngredients)
-
-                    if !viewModel.hasPantryIngredients {
-                        Label(
-                            "Add at least one ingredient to start finding realistic meals.",
-                            systemImage: "info.circle"
-                        )
-                        .font(.caption)
-                        .foregroundStyle(FridgeFixTheme.secondaryText)
-                    }
-                }
-                .padding(.vertical, 6)
-                .listRowBackground(FridgeFixTheme.cardBackground)
-            }
-
-            if let errorMessage = viewModel.errorMessage {
-                Section("Pantry Help") {
-                    Label {
-                        Text(errorMessage)
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundStyle(.orange)
-                    }
-
-                    Button {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                PantryHeader(
+                    refresh: {
                         viewModel.loadPantry()
-                    } label: {
-                        Label("Refresh pantry", systemImage: "arrow.clockwise")
+                    },
+                    addIngredient: {
+                        viewModel.isShowingAddIngredient = true
                     }
-                }
-                .listRowBackground(FridgeFixTheme.cardBackground)
-            }
+                )
 
-            if viewModel.ingredientsExpiringSoon.isEmpty {
-                Section {
-                    Label(
-                        "No ingredients need urgent attention today.",
-                        systemImage: "checkmark.circle"
-                    )
-                    .foregroundStyle(FridgeFixTheme.secondaryText)
-                }
-                .listRowBackground(FridgeFixTheme.cardBackground)
-            } else {
-                Section {
-                    ForEach(viewModel.ingredientsExpiringSoon) { ingredient in
-                        PantryIngredientRow(
-                            ingredient: ingredient,
-                            isUrgent: true,
-                            editExpiryDate: {
-                                viewModel.beginEditingExpiryDate(
-                                    for: ingredient
-                                )
-                            }
-                        )
-                    }
-                } header: {
-                    Label("Use Soon", systemImage: "clock.badge.exclamationmark")
-                } footer: {
-                    Text("These ingredients expire today or within the next two days.")
-                }
-                .listRowBackground(FridgeFixTheme.cardBackground)
-            }
+                PantrySearchField(searchText: $viewModel.searchText)
 
-            if !otherIngredients.isEmpty || viewModel.ingredients.isEmpty {
-                Section("Other Ingredients") {
-                if viewModel.ingredients.isEmpty {
-                    ContentUnavailableView(
-                        "Your Pantry Is Empty",
-                        systemImage: "refrigerator",
-                        description: Text(
-                            "Add ingredients to discover meals that fit your real pantry."
-                        )
+                if let errorMessage = viewModel.errorMessage {
+                    PantryDashboardMessage(
+                        message: errorMessage,
+                        systemImage: "exclamationmark.triangle",
+                        tint: .orange,
+                        actionTitle: "Refresh pantry",
+                        actionSystemImage: "arrow.clockwise",
+                        action: {
+                            viewModel.loadPantry()
+                        }
                     )
+                }
+
+                if viewModel.ingredients.isEmpty &&
+                    !viewModel.hasActiveFilters {
+                    emptyPantryCard
+                } else if viewModel.ingredients.isEmpty {
+                    filteredEmptyPantryCard
                 } else {
-                    ForEach(otherIngredients) { ingredient in
-                        PantryIngredientRow(
-                            ingredient: ingredient,
-                            isUrgent: ingredient.isExpiringSoon,
-                            editExpiryDate: {
-                                viewModel.beginEditingExpiryDate(
-                                    for: ingredient
-                                )
-                            }
-                        )
-                    }
-                    .onDelete { offsets in
-                        viewModel.removePantryIngredients(
-                            offsets.map {
-                                otherIngredients[$0]
-                            }
-                        )
-                    }
+                    PantryDashboard(
+                        featuredIngredient: viewModel.featuredIngredient,
+                        categories: viewModel.availableCategoryFilters,
+                        selectedCategory: viewModel.selectedCategory,
+                        selectCategory: { category in
+                            viewModel.selectedCategory = category
+                        },
+                        editExpiryDate: { ingredient in
+                            viewModel.beginEditingExpiryDate(for: ingredient)
+                        }
+                    )
+
+                    ingredientCardsSection
                 }
-                }
-                .listRowBackground(FridgeFixTheme.cardBackground)
             }
+            .padding(.horizontal, FridgeFixTheme.screenPadding)
+            .padding(.top, 12)
+            .padding(.bottom, 24)
         }
-        .scrollContentBackground(.hidden)
         .background(FridgeFixTheme.pageBackground)
         .safeAreaInset(edge: .bottom) {
-            Color.clear.frame(height: 16)
+            Color.clear.frame(height: 18)
         }
     }
 
-    private var otherIngredients: [PantryIngredient] {
-        viewModel.ingredients.filter {
-            !$0.isExpiringSoon
+    private var emptyPantryCard: some View {
+        PantryDashboardMessage(
+            message: "Add a few pantry ingredients before FridgeFix can recommend realistic meals.",
+            systemImage: "refrigerator",
+            tint: FridgeFixTheme.brandAccent,
+            actionTitle: "Add ingredient",
+            actionSystemImage: "plus",
+            action: {
+                viewModel.isShowingAddIngredient = true
+            }
+        )
+    }
+
+    private var filteredEmptyPantryCard: some View {
+        PantryDashboardMessage(
+            message: "No pantry ingredients match this search.",
+            systemImage: "magnifyingglass",
+            tint: FridgeFixTheme.secondaryText,
+            actionTitle: "Clear search",
+            actionSystemImage: "xmark.circle",
+            action: {
+                viewModel.clearFilters()
+            }
+        )
+    }
+
+    private var ingredientCardsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Pantry Ingredients")
+                    .fridgeFixSectionTitle()
+
+                Spacer(minLength: 8)
+
+                if viewModel.hasActiveFilters {
+                    Button {
+                        viewModel.clearFilters()
+                    } label: {
+                        Label("Clear", systemImage: "xmark.circle")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .accessibilityLabel("Clear pantry filters")
+                }
+            }
+
+            if viewModel.isShowingFilteredEmptyState {
+                PantryDashboardMessage(
+                    message: "No pantry ingredients match these filters.",
+                    systemImage: "magnifyingglass",
+                    tint: FridgeFixTheme.secondaryText,
+                    actionTitle: "Clear filters",
+                    actionSystemImage: "xmark.circle",
+                    action: {
+                        viewModel.clearFilters()
+                    }
+                )
+            } else if viewModel.visibleIngredientsExcludingFeatured.isEmpty {
+                Text("Featured above. Clear filters or add another ingredient to see more pantry cards.")
+                    .font(.subheadline)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(FridgeFixTheme.cardBackground)
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: FridgeFixTheme.compactCornerRadius,
+                            style: .continuous
+                        )
+                    )
+            } else {
+                LazyVStack(spacing: 10) {
+                    ForEach(viewModel.visibleIngredientsExcludingFeatured) { ingredient in
+                        PantryIngredientCard(
+                            ingredient: ingredient,
+                            editExpiryDate: {
+                                viewModel.beginEditingExpiryDate(for: ingredient)
+                            },
+                            deleteIngredient: {
+                                viewModel.removePantryIngredients([ingredient])
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
-/// Displays one pantry ingredient and its expiry status.
-private struct PantryIngredientRow: View {
+private struct PantryHeader: View {
+
+    let refresh: () -> Void
+    let addIngredient: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("My Pantry")
+                    .fridgeFixScreenTitle()
+
+                Text("Make the most of what you already have.")
+                    .font(.subheadline)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            HStack(spacing: 8) {
+                Button(action: refresh) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.headline)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.bordered)
+                .clipShape(Circle())
+                .accessibilityLabel("Refresh pantry")
+
+                Button(action: addIngredient) {
+                    Image(systemName: "plus")
+                        .font(.headline)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.borderedProminent)
+                .clipShape(Circle())
+                .accessibilityLabel("Add ingredient")
+            }
+        }
+    }
+}
+
+private struct PantryDashboard: View {
+
+    let featuredIngredient: PantryIngredient?
+    let categories: [IngredientSubstitutionCategory]
+    let selectedCategory: IngredientSubstitutionCategory?
+    let selectCategory: (IngredientSubstitutionCategory?) -> Void
+    let editExpiryDate: (PantryIngredient) -> Void
+
+    var body: some View {
+        GeometryReader { proxy in
+            let spacing: CGFloat = 12
+            let columnWidth = max((proxy.size.width - spacing) / 2, 0)
+
+            HStack(alignment: .top, spacing: spacing) {
+                if let featuredIngredient {
+                    FeaturedIngredientCard(
+                        ingredient: featuredIngredient,
+                        width: columnWidth,
+                        editExpiryDate: {
+                            editExpiryDate(featuredIngredient)
+                        }
+                    )
+                    .frame(width: columnWidth)
+                }
+
+                CategoryGrid(
+                    categories: categories,
+                    selectedCategory: selectedCategory,
+                    width: columnWidth,
+                    selectCategory: selectCategory
+                )
+                .frame(width: columnWidth)
+            }
+        }
+        .frame(height: 220)
+    }
+}
+
+private struct FeaturedIngredientCard: View {
 
     let ingredient: PantryIngredient
-    let isUrgent: Bool
+    let width: CGFloat
     let editExpiryDate: () -> Void
 
     var body: some View {
-        HStack {
-            Image(
-                systemName: isUrgent
-                    ? "exclamationmark.triangle.fill"
-                    : "leaf.fill"
+        Button(action: editExpiryDate) {
+            ZStack(alignment: .bottomLeading) {
+                IngredientArtworkView(
+                    kind: .ingredient(
+                        name: ingredient.name,
+                        category: ingredient.substitutionCategory
+                    ),
+                    size: CGSize(width: width, height: 220),
+                    cornerRadius: FridgeFixTheme.cardCornerRadius
+                )
+
+                LinearGradient(
+                    colors: [
+                        .black.opacity(0.08),
+                        .black.opacity(0.72)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+
+                VStack(alignment: .leading, spacing: 8) {
+                    if ingredient.isExpiringSoon {
+                        Text("Use Soon")
+                            .font(.caption2)
+                            .fontDesign(.rounded)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .background(.orange)
+                            .clipShape(Capsule())
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Text(ingredient.name)
+                        .font(.headline)
+                        .fontDesign(.rounded)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(expiryText)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.88))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(12)
+
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: editExpiryDate) {
+                            Image(systemName: "pencil")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundStyle(FridgeFixTheme.primaryText)
+                                .frame(width: 34, height: 34)
+                                .background(.white.opacity(0.92))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Edit \(ingredient.name) expiry date")
+                    }
+                    Spacer()
+                }
+                .padding(10)
+            }
+            .frame(width: width, height: 220)
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: FridgeFixTheme.cardCornerRadius,
+                    style: .continuous
+                )
             )
-                .foregroundStyle(isUrgent ? .orange : .green)
+            .shadow(color: .black.opacity(0.10), radius: 10, x: 0, y: 5)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Featured ingredient, \(ingredient.name), \(expiryText)"
+        )
+        .accessibilityHint("Opens expiry date editing.")
+    }
+
+    private var expiryText: String {
+        guard let expiresAt = ingredient.expiresAt else {
+            return "Expiry date unknown"
+        }
+
+        return "Expires \(expiresAt.formatted(date: .abbreviated, time: .omitted))"
+    }
+}
+
+private struct CategoryGrid: View {
+
+    let categories: [IngredientSubstitutionCategory]
+    let selectedCategory: IngredientSubstitutionCategory?
+    let width: CGFloat
+    let selectCategory: (IngredientSubstitutionCategory?) -> Void
+
+    private var gridItems: [PantryCategoryGridItem] {
+        [PantryCategoryGridItem(category: nil)] +
+        categories.map { PantryCategoryGridItem(category: $0) }
+    }
+
+    var body: some View {
+        let spacing: CGFloat = 8
+        let cardWidth = max((width - spacing) / 2, 0)
+        let rowCount = CGFloat(max((gridItems.count + 1) / 2, 1))
+        let cardHeight = max((220 - (spacing * (rowCount - 1))) / rowCount, 0)
+
+        LazyVGrid(
+            columns: [
+                GridItem(.fixed(cardWidth), spacing: spacing),
+                GridItem(.fixed(cardWidth), spacing: spacing)
+            ],
+            spacing: spacing
+        ) {
+            ForEach(gridItems) { item in
+                CategoryDashboardCard(
+                    title: item.title,
+                    category: item.category,
+                    isSelected: item.category == selectedCategory,
+                    size: CGSize(width: cardWidth, height: cardHeight),
+                    action: {
+                        selectCategory(item.category)
+                    }
+                )
+            }
+        }
+    }
+}
+
+private struct PantryCategoryGridItem: Identifiable {
+
+    let category: IngredientSubstitutionCategory?
+
+    var id: String {
+        category?.rawValue ?? "all"
+    }
+
+    var title: String {
+        category?.addFlowDisplayName ?? "All"
+    }
+}
+
+private struct CategoryDashboardCard: View {
+
+    let title: String
+    let category: IngredientSubstitutionCategory?
+    let isSelected: Bool
+    let size: CGSize
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: .bottomLeading) {
+                IngredientArtworkView(
+                    kind: .category(category),
+                    size: size,
+                    cornerRadius: FridgeFixTheme.compactCornerRadius
+                )
+
+                LinearGradient(
+                    colors: [
+                        .black.opacity(0.02),
+                        .black.opacity(0.64)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+
+                Text(title)
+                    .font(.caption)
+                    .fontDesign(.rounded)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
+                    .padding(8)
+            }
+            .frame(width: size.width, height: size.height)
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: FridgeFixTheme.compactCornerRadius,
+                    style: .continuous
+                )
+            )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: FridgeFixTheme.compactCornerRadius,
+                    style: .continuous
+                )
+                .stroke(
+                    isSelected ? FridgeFixTheme.brandAccent : .white.opacity(0.18),
+                    lineWidth: isSelected ? 3 : 1
+                )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title) pantry category")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+/// Displays a compact pantry search field for existing pantry ingredients.
+private struct PantrySearchField: View {
+
+    @Binding var searchText: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(FridgeFixTheme.brandAccent)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading) {
-                Text(ingredient.name)
-                    .fridgeFixCardTitle()
+            TextField(
+                "Search your pantry",
+                text: $searchText,
+                prompt: Text("Search your pantry")
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
+            )
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .foregroundStyle(FridgeFixTheme.primaryText)
+                .tint(FridgeFixTheme.brandAccent)
+                .accessibilityLabel("Search your pantry")
 
-                Text(ingredient.substitutionCategory.displayName)
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear pantry search")
+            }
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 52)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: FridgeFixTheme.compactCornerRadius,
+                style: .continuous
+            )
+        )
+    }
+}
+
+/// Displays one pantry ingredient and its expiry status.
+private struct PantryIngredientCard: View {
+
+    let ingredient: PantryIngredient
+    let editExpiryDate: () -> Void
+    let deleteIngredient: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            IngredientArtworkView(
+                kind: .ingredient(
+                    name: ingredient.name,
+                    category: ingredient.substitutionCategory
+                ),
+                size: CGSize(width: 58, height: 58),
+                cornerRadius: 12
+            )
+            .accessibilityLabel("\(ingredient.name) photo")
+
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(ingredient.name)
+                        .fridgeFixCardTitle()
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if ingredient.isExpiringSoon {
+                        Image(systemName: "clock.badge.exclamationmark.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .accessibilityLabel("Use soon")
+                    }
+                }
+
+                Text(ingredient.substitutionCategory.addFlowDisplayName)
                     .font(.caption)
                     .foregroundStyle(FridgeFixTheme.secondaryText)
 
-                if let expiresAt = ingredient.expiresAt {
-                    Text("Expires \(expiresAt.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.caption)
-                        .foregroundStyle(FridgeFixTheme.secondaryText)
+                Text(expiryText)
+                    .font(.caption)
+                    .foregroundStyle(
+                        ingredient.isExpiringSoon
+                            ? .orange
+                            : FridgeFixTheme.secondaryText
+                    )
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            VStack(spacing: 6) {
+                Button(action: editExpiryDate) {
+                    Image(systemName: "pencil.circle")
+                        .font(.title3)
+                        .frame(width: 36, height: 36)
                 }
-            }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(expiryActionAccessibilityLabel)
+                .accessibilityHint(
+                    "Changes the stored expiry date for this pantry ingredient."
+                )
 
-            Spacer()
-
-            Button {
-                editExpiryDate()
-            } label: {
-                Image(systemName: "pencil.circle")
-                    .font(.title3)
-                    .frame(width: 44, height: 44)
+                Button(role: .destructive, action: deleteIngredient) {
+                    Image(systemName: "trash")
+                        .font(.subheadline)
+                        .frame(width: 36, height: 36)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Delete \(ingredient.name)")
             }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(expiryActionAccessibilityLabel)
-            .accessibilityHint("Changes the stored expiry date for this pantry ingredient.")
         }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: FridgeFixTheme.compactCornerRadius,
+                style: .continuous
+            )
+        )
+        .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 3)
+    }
+
+    private var expiryText: String {
+        guard let expiresAt = ingredient.expiresAt else {
+            return "Expiry date unknown"
+        }
+
+        return "Expires \(expiresAt.formatted(date: .abbreviated, time: .omitted))"
     }
 
     private var expiryActionAccessibilityLabel: String {
@@ -252,66 +637,45 @@ private struct PantryIngredientRow: View {
     }
 }
 
-/// Collects a new pantry ingredient from the user.
-private struct AddIngredientView: View {
+private struct PantryDashboardMessage: View {
 
-    @ObservedObject var viewModel: PantryViewModel
-    @Environment(\.dismiss) private var dismiss
+    let message: String
+    let systemImage: String
+    let tint: Color
+    let actionTitle: String
+    let actionSystemImage: String
+    let action: () -> Void
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Ingredient") {
-                    TextField(
-                        "Name",
-                        text: $viewModel.newIngredientName
-                    )
-
-                    Picker(
-                        "Substitution Category",
-                        selection: $viewModel.newIngredientCategory
-                    ) {
-                        ForEach(
-                            IngredientSubstitutionCategory.allCases,
-                            id: \.self
-                        ) { category in
-                            Text(category.displayName)
-                                .tag(category)
-                        }
-                    }
-                }
-
-                Section("Expiry") {
-                    Toggle(
-                        "Has expiry date",
-                        isOn: $viewModel.newIngredientHasExpiryDate
-                    )
-
-                    if viewModel.newIngredientHasExpiryDate {
-                        DatePicker(
-                            "Expiry Date",
-                            selection: $viewModel.newIngredientExpiryDate,
-                            displayedComponents: .date
-                        )
-                    }
-                }
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundStyle(FridgeFixTheme.primaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: systemImage)
+                    .foregroundStyle(tint)
             }
-            .navigationTitle("Add Ingredient")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        viewModel.resetAddIngredientForm()
-                        dismiss()
-                    }
-                }
 
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        viewModel.addPantryIngredient()
-                    }
-                }
+            Button(action: action) {
+                Label(actionTitle, systemImage: actionSystemImage)
+                    .font(.subheadline)
+                    .fontDesign(.rounded)
+                    .fontWeight(.semibold)
             }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(FridgeFixTheme.cardBackground)
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: FridgeFixTheme.compactCornerRadius,
+                style: .continuous
+            )
+        )
     }
 }
 
@@ -347,6 +711,8 @@ private struct EditExpiryDateView: View {
                 }
             }
             .navigationTitle("Edit Expiry")
+            .scrollContentBackground(.hidden)
+            .background(FridgeFixTheme.pageBackground)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
