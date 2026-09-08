@@ -59,6 +59,7 @@ struct PantryView: View {
                     viewModel: viewModel
                 )
             }
+            .background(FridgeFixTheme.pageBackground)
         }
     }
 
@@ -80,7 +81,7 @@ struct PantryView: View {
                             "What can I cook?",
                             systemImage: "sparkles"
                         )
-                        .font(.headline)
+                        .fridgeFixPrimaryActionTitle()
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.borderedProminent)
@@ -96,6 +97,7 @@ struct PantryView: View {
                     }
                 }
                 .padding(.vertical, 6)
+                .listRowBackground(FridgeFixTheme.cardBackground)
             }
 
             if let errorMessage = viewModel.errorMessage {
@@ -113,6 +115,7 @@ struct PantryView: View {
                         Label("Refresh pantry", systemImage: "arrow.clockwise")
                     }
                 }
+                .listRowBackground(FridgeFixTheme.cardBackground)
             }
 
             if viewModel.ingredientsExpiringSoon.isEmpty {
@@ -123,6 +126,7 @@ struct PantryView: View {
                     )
                     .foregroundStyle(.secondary)
                 }
+                .listRowBackground(FridgeFixTheme.cardBackground)
             } else {
                 Section {
                     ForEach(viewModel.ingredientsExpiringSoon) { ingredient in
@@ -141,6 +145,7 @@ struct PantryView: View {
                 } footer: {
                     Text("These ingredients expire today or within the next two days.")
                 }
+                .listRowBackground(FridgeFixTheme.cardBackground)
             }
 
             if !otherIngredients.isEmpty || viewModel.ingredients.isEmpty {
@@ -174,8 +179,11 @@ struct PantryView: View {
                     }
                 }
                 }
+                .listRowBackground(FridgeFixTheme.cardBackground)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(FridgeFixTheme.pageBackground)
     }
 
     private var otherIngredients: [PantryIngredient] {
@@ -204,7 +212,7 @@ private struct PantryIngredientRow: View {
 
             VStack(alignment: .leading) {
                 Text(ingredient.name)
-                    .font(.headline)
+                    .fridgeFixCardTitle()
 
                 Text(ingredient.substitutionCategory.displayName)
                     .font(.caption)

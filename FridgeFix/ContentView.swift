@@ -43,6 +43,7 @@ struct ContentView: View {
             }
             .tag(FridgeFixTab.recipes)
         }
+        .tint(FridgeFixTheme.brandAccent)
     }
 }
 
@@ -86,6 +87,8 @@ private struct RecipesTabView: View {
                 .navigationTitle("Recipes")
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(FridgeFixTheme.pageBackground)
     }
 }
 

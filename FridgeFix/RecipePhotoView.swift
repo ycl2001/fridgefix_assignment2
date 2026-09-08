@@ -44,7 +44,7 @@ struct RecipePhotoView: View {
                 .clipped()
         } else {
             ZStack {
-                Color(.secondarySystemGroupedBackground)
+                FridgeFixTheme.cardBackground
 
                 VStack(spacing: 8) {
                     Image(systemName: "fork.knife")
