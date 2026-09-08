@@ -218,6 +218,16 @@ final class PantryViewModel: ObservableObject {
         newIngredientExpiryDate = Date()
     }
 
+    /// Builds the add-flow view model with the same pantry repository.
+    func makeAddPantryIngredientViewModel() -> AddPantryIngredientViewModel {
+        AddPantryIngredientViewModel(
+            pantryRepository: pantryRepository,
+            onPantryChanged: { [weak self] in
+                self?.loadPantry()
+            }
+        )
+    }
+
     /// Clears all pantry browsing filters.
     func clearFilters() {
         searchText = ""

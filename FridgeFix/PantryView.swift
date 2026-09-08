@@ -28,7 +28,6 @@ struct PantryView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            viewModel.resetAddIngredientForm()
                             viewModel.isShowingAddIngredient = true
                         } label: {
                             Image(systemName: "plus")
@@ -48,8 +47,10 @@ struct PantryView: View {
                 .task {
                     viewModel.loadPantry()
                 }
-                .sheet(isPresented: $viewModel.isShowingAddIngredient) {
-                    AddIngredientView(viewModel: viewModel)
+                .fullScreenCover(isPresented: $viewModel.isShowingAddIngredient) {
+                    AddPantryIngredientView(
+                        viewModel: viewModel.makeAddPantryIngredientViewModel()
+                    )
                 }
                 .sheet(
                     item: $viewModel.ingredientBeingEditedForExpiry
@@ -74,7 +75,6 @@ struct PantryView: View {
             if viewModel.ingredients.isEmpty {
                 emptyPantrySection
             } else {
-                searchAndFilterSection
                 useSoonSection
                 visiblePantrySection
             }
@@ -149,7 +149,6 @@ struct PantryView: View {
                 Text("Add a few pantry ingredients before FridgeFix can recommend realistic meals.")
             } actions: {
                 Button {
-                    viewModel.resetAddIngredientForm()
                     viewModel.isShowingAddIngredient = true
                 } label: {
                     Label("Add ingredient", systemImage: "plus")
@@ -160,50 +159,11 @@ struct PantryView: View {
         .listRowBackground(FridgeFixTheme.cardBackground)
     }
 
-    private var searchAndFilterSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                PantrySearchField(searchText: $viewModel.searchText)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        PantryCategoryFilterChip(
-                            title: "All",
-                            isSelected: viewModel.selectedCategory == nil
-                        ) {
-                            viewModel.selectedCategory = nil
-                        }
-
-                        ForEach(
-                            viewModel.availableCategoryFilters,
-                            id: \.self
-                        ) { category in
-                            PantryCategoryFilterChip(
-                                title: category.displayName,
-                                isSelected: viewModel.selectedCategory == category
-                            ) {
-                                viewModel.selectedCategory = category
-                            }
-                        }
-                    }
-                    .padding(.trailing, 4)
-                }
-            }
-            .padding(.vertical, 4)
-        }
-        .listRowInsets(
-            EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16)
-        )
-        .listRowBackground(FridgeFixTheme.cardBackground)
-    }
-
     private var useSoonSection: some View {
         Section {
-            if viewModel.visibleIngredientsExpiringSoon.isEmpty {
+            if viewModel.ingredientsExpiringSoon.isEmpty {
                 Label(
-                    viewModel.hasActiveFilters
-                        ? "No urgent ingredients match these filters."
-                        : "No ingredients need urgent attention today.",
+                    "No ingredients need urgent attention today.",
                     systemImage: "checkmark.circle"
                 )
                 .font(.subheadline)
@@ -213,7 +173,7 @@ struct PantryView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .top, spacing: 12) {
                         ForEach(
-                            viewModel.visibleIngredientsExpiringSoon
+                            viewModel.ingredientsExpiringSoon
                         ) { ingredient in
                             UseSoonIngredientCard(
                                 ingredient: ingredient,
@@ -241,128 +201,32 @@ struct PantryView: View {
 
     private var visiblePantrySection: some View {
         Section {
-            if viewModel.isShowingFilteredEmptyState {
-                filteredEmptyState
-            } else {
-                ForEach(viewModel.visibleIngredients) { ingredient in
-                    PantryIngredientRow(
-                        ingredient: ingredient,
-                        isUrgent: ingredient.isExpiringSoon,
-                        editExpiryDate: {
-                            viewModel.beginEditingExpiryDate(for: ingredient)
-                        }
-                    )
-                }
-                .onDelete { offsets in
-                    viewModel.removePantryIngredients(
-                        offsets.map {
-                            viewModel.visibleIngredients[$0]
-                        }
-                    )
-                }
+            ForEach(viewModel.ingredients) { ingredient in
+                PantryIngredientRow(
+                    ingredient: ingredient,
+                    isUrgent: ingredient.isExpiringSoon,
+                    editExpiryDate: {
+                        viewModel.beginEditingExpiryDate(for: ingredient)
+                    }
+                )
+            }
+            .onDelete { offsets in
+                viewModel.removePantryIngredients(
+                    offsets.map {
+                        viewModel.ingredients[$0]
+                    }
+                )
             }
         } header: {
             Text("My Pantry")
         } footer: {
-            if !viewModel.visibleIngredientsExpiringSoon.isEmpty {
+            if !viewModel.ingredientsExpiringSoon.isEmpty {
                 Text("Urgent ingredients also appear here so pantry editing and deletion stay in one complete list.")
             }
         }
         .listRowBackground(FridgeFixTheme.cardBackground)
     }
 
-    private var filteredEmptyState: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ContentUnavailableView {
-                Label("No pantry matches", systemImage: "magnifyingglass")
-            } description: {
-                Text("Try another search, choose All, or add the ingredient you expected to find.")
-            }
-
-            HStack(spacing: 12) {
-                Button {
-                    viewModel.clearFilters()
-                } label: {
-                    Label("Clear filters", systemImage: "xmark.circle")
-                }
-                .buttonStyle(.bordered)
-
-                Button {
-                    viewModel.resetAddIngredientForm()
-                    viewModel.isShowingAddIngredient = true
-                } label: {
-                    Label("Add ingredient", systemImage: "plus")
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-        .padding(.vertical, 8)
-    }
-}
-
-/// Displays a compact pantry search field for existing pantry ingredients.
-private struct PantrySearchField: View {
-
-    @Binding var searchText: String
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(FridgeFixTheme.secondaryText)
-                .accessibilityHidden(true)
-
-            TextField("Search your pantry", text: $searchText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.search)
-
-            if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(FridgeFixTheme.secondaryText)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Clear pantry search")
-            }
-        }
-        .padding(.horizontal, 12)
-        .frame(minHeight: FridgeFixTheme.compactActionHeight)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(
-            RoundedRectangle(cornerRadius: FridgeFixTheme.compactCornerRadius)
-        )
-        .accessibilityElement(children: .contain)
-    }
-}
-
-/// Selects one pantry category filter.
-private struct PantryCategoryFilterChip: View {
-
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontDesign(.rounded)
-                .fontWeight(.semibold)
-                .foregroundStyle(isSelected ? .white : FridgeFixTheme.primaryText)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 36)
-        }
-        .buttonStyle(.plain)
-        .background(
-            isSelected
-                ? FridgeFixTheme.brandAccent
-                : Color(.secondarySystemGroupedBackground)
-        )
-        .clipShape(Capsule())
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
 }
 
 /// Highlights one urgent ingredient in the horizontal Use Soon section.
@@ -487,71 +351,6 @@ private struct PantryIngredientRow: View {
         }
 
         return "Edit \(ingredient.name) expiry date"
-    }
-}
-
-/// Collects a new pantry ingredient from the user.
-private struct AddIngredientView: View {
-
-    @ObservedObject var viewModel: PantryViewModel
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Ingredient") {
-                    TextField(
-                        "Name",
-                        text: $viewModel.newIngredientName
-                    )
-
-                    Picker(
-                        "Substitution Category",
-                        selection: $viewModel.newIngredientCategory
-                    ) {
-                        ForEach(
-                            IngredientSubstitutionCategory.allCases,
-                            id: \.self
-                        ) { category in
-                            Text(category.displayName)
-                                .tag(category)
-                        }
-                    }
-                }
-
-                Section("Expiry") {
-                    Toggle(
-                        "Has expiry date",
-                        isOn: $viewModel.newIngredientHasExpiryDate
-                    )
-
-                    if viewModel.newIngredientHasExpiryDate {
-                        DatePicker(
-                            "Expiry Date",
-                            selection: $viewModel.newIngredientExpiryDate,
-                            displayedComponents: .date
-                        )
-                    }
-                }
-            }
-            .navigationTitle("Add Ingredient")
-            .scrollContentBackground(.hidden)
-            .background(FridgeFixTheme.pageBackground)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        viewModel.resetAddIngredientForm()
-                        dismiss()
-                    }
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        viewModel.addPantryIngredient()
-                    }
-                }
-            }
-        }
     }
 }
 
