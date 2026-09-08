@@ -13,6 +13,7 @@ struct RecommendationsView: View {
     let context: CookingContext?
 
     @ObservedObject var viewModel: RecommendationsViewModel
+    @State private var isReadinessGuidePresented = false
 
     init(
         context: CookingContext? = nil,
@@ -33,6 +34,22 @@ struct RecommendationsView: View {
                 }
             }
             .navigationTitle("Your Meal Options")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isReadinessGuidePresented = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .accessibilityLabel("Readiness guide")
+                    .accessibilityHint("Explains the meal readiness symbols.")
+                }
+            }
+            .sheet(isPresented: $isReadinessGuidePresented) {
+                ReadinessGuideView()
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
             .task {
                 if let context {
                     viewModel.generateRecommendations(for: context)
@@ -169,42 +186,19 @@ private struct RecipeRecommendationCard: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(recommendation.recipe.name)
-                        .font(.headline)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        RecipeReadinessIcon(
+                            readiness: recommendation.suitability.readiness
+                        )
 
-                    RecipeReadinessBadge(
-                        readiness: recommendation.suitability.readiness
-                    )
+                        Text(recommendation.recipe.name)
+                            .font(.headline)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
-                LazyVGrid(
-                    columns: compactFactColumns,
-                    alignment: .leading,
-                    spacing: 6
-                ) {
-                    CompactRecommendationFact(
-                        value: "\(recommendation.suitability.pantryMatchPercentage)%",
-                        label: "Pantry",
-                        systemImage: "refrigerator",
-                        accessibilityLabel: "\(recommendation.suitability.pantryMatchPercentage) percent pantry match"
-                    )
-
-                    CompactRecommendationFact(
-                        value: "\(recommendation.recipe.totalCookingTimeInMinutes) min",
-                        label: "Total",
-                        systemImage: "clock",
-                        accessibilityLabel: "\(recommendation.recipe.totalCookingTimeInMinutes) minutes total cooking time"
-                    )
-
-                    CompactRecommendationFact(
-                        value: recommendation.recipe.difficulty.displayName,
-                        label: "Effort",
-                        systemImage: "chart.bar",
-                        accessibilityLabel: "\(recommendation.recipe.difficulty.displayName) cooking difficulty"
-                    )
-                }
+                CompactRecommendationMetricStrip(facts: compactFacts)
 
                 Label(shoppingSummaryText, systemImage: shoppingSummaryIcon)
                     .font(.caption)
@@ -229,11 +223,26 @@ private struct RecipeRecommendationCard: View {
         .padding(.vertical, 6)
     }
 
-    private var compactFactColumns: [GridItem] {
+    private var compactFacts: [CompactRecommendationFact] {
         [
-            GridItem(.flexible(), spacing: 8),
-            GridItem(.flexible(), spacing: 8),
-            GridItem(.flexible(), spacing: 8)
+            CompactRecommendationFact(
+                value: "\(recommendation.suitability.pantryMatchPercentage)%",
+                label: "Pantry",
+                systemImage: "refrigerator",
+                accessibilityLabel: "\(recommendation.suitability.pantryMatchPercentage) percent pantry match"
+            ),
+            CompactRecommendationFact(
+                value: "\(recommendation.recipe.totalCookingTimeInMinutes) min",
+                label: "Total",
+                systemImage: "clock",
+                accessibilityLabel: "\(recommendation.recipe.totalCookingTimeInMinutes) minutes total cooking time"
+            ),
+            CompactRecommendationFact(
+                value: recommendation.recipe.difficulty.displayName,
+                label: "Effort",
+                systemImage: "chart.bar",
+                accessibilityLabel: "\(recommendation.recipe.difficulty.displayName) cooking difficulty"
+            )
         ]
     }
 
@@ -284,49 +293,92 @@ private struct RecipeRecommendationCard: View {
     }
 }
 
-/// Shows one compact recommendation fact without expanding the result card.
-private struct CompactRecommendationFact: View {
+/// Groups compact recommendation facts inside one shared metric surface.
+private struct CompactRecommendationMetricStrip: View {
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    let facts: [CompactRecommendationFact]
+
+    var body: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                LazyVGrid(columns: accessibilityColumns, spacing: 10) {
+                    ForEach(facts) { fact in
+                        CompactRecommendationFactColumn(fact: fact)
+                    }
+                }
+            } else {
+                HStack(spacing: 0) {
+                    ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
+                        CompactRecommendationFactColumn(fact: fact)
+
+                        if index < facts.count - 1 {
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 9)
+        .padding(.horizontal, 8)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var accessibilityColumns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8)
+        ]
+    }
+}
+
+/// One compact recommendation metric displayed inside the shared metric strip.
+private struct CompactRecommendationFact: Identifiable {
+
+    let id = UUID()
     let value: String
     let label: String
     let systemImage: String
     let accessibilityLabel: String
+}
+
+private struct CompactRecommendationFactColumn: View {
+
+    let fact: CompactRecommendationFact
 
     var body: some View {
         VStack(spacing: 4) {
-            Image(systemName: systemImage)
-                .font(.caption)
+            Image(systemName: fact.systemImage)
+                .font(.caption2)
                 .foregroundStyle(.secondary)
 
-            Text(value)
+            Text(fact.value)
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .lineLimit(1)
+                .lineLimit(2)
 
-            Text(label)
+            Text(fact.label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
         .multilineTextAlignment(.center)
-        .padding(.vertical, 6)
-        .padding(.horizontal, 4)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
-        .accessibilityLabel(accessibilityLabel)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(fact.accessibilityLabel)
     }
 }
 
-/// Shows the practical readiness category for a recommended recipe.
-private struct RecipeReadinessBadge: View {
+/// Shows only the readiness symbol for compact recommendation cards.
+private struct RecipeReadinessIcon: View {
 
     let readiness: RecipeReadiness
 
     var body: some View {
-        Label(readiness.displayName, systemImage: iconName)
-            .font(.caption)
-            .fontWeight(.semibold)
+        Image(systemName: iconName)
+            .font(.system(size: 19, weight: .semibold))
             .foregroundStyle(foregroundStyle)
+            .accessibilityLabel(readiness.displayName)
     }
 
     private var iconName: String {
@@ -345,9 +397,54 @@ private struct RecipeReadinessBadge: View {
         case .readyToCook:
             return .green
         case .almostReady:
-            return .purple
+            return .accentColor
         case .needsOneToTwoIngredients:
             return .orange
+        }
+    }
+}
+
+/// Explains the readiness symbols used by compact recommendation cards.
+private struct ReadinessGuideView: View {
+
+    private let rows: [(readiness: RecipeReadiness, description: String)] = [
+        (
+            .readyToCook,
+            "The essential ingredients are available, or accepted substitutions make the recipe immediately practical."
+        ),
+        (
+            .almostReady,
+            "One minor ingredient is unavailable, but an accepted pantry substitution can be used."
+        ),
+        (
+            .needsOneToTwoIngredients,
+            "A small amount of additional shopping is required before cooking."
+        )
+    ]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(rows, id: \.readiness) { row in
+                    HStack(alignment: .top, spacing: 12) {
+                        RecipeReadinessIcon(readiness: row.readiness)
+                            .frame(width: 28, height: 28)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(row.readiness.displayName)
+                                .font(.headline)
+
+                            Text(row.description)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .navigationTitle("What do these symbols mean?")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
