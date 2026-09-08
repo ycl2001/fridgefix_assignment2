@@ -113,6 +113,9 @@ struct RecommendationsView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: 12)
+        }
     }
 
     private func recommendationUnavailableState(
@@ -164,14 +167,12 @@ private struct RecipeRecommendationCard: View {
                 cornerRadius: 10
             )
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(recommendation.recipe.name)
                         .font(.headline)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
-
-                    Spacer(minLength: 8)
 
                     RecipeReadinessBadge(
                         readiness: recommendation.suitability.readiness
@@ -184,19 +185,22 @@ private struct RecipeRecommendationCard: View {
                     spacing: 6
                 ) {
                     CompactRecommendationFact(
-                        text: "\(recommendation.suitability.pantryMatchPercentage)% pantry",
+                        value: "\(recommendation.suitability.pantryMatchPercentage)%",
+                        label: "Pantry",
                         systemImage: "refrigerator",
                         accessibilityLabel: "\(recommendation.suitability.pantryMatchPercentage) percent pantry match"
                     )
 
                     CompactRecommendationFact(
-                        text: "\(recommendation.recipe.totalCookingTimeInMinutes) min",
+                        value: "\(recommendation.recipe.totalCookingTimeInMinutes) min",
+                        label: "Total",
                         systemImage: "clock",
                         accessibilityLabel: "\(recommendation.recipe.totalCookingTimeInMinutes) minutes total cooking time"
                     )
 
                     CompactRecommendationFact(
-                        text: recommendation.recipe.difficulty.displayName,
+                        value: recommendation.recipe.difficulty.displayName,
+                        label: "Effort",
                         systemImage: "chart.bar",
                         accessibilityLabel: "\(recommendation.recipe.difficulty.displayName) cooking difficulty"
                     )
@@ -205,8 +209,8 @@ private struct RecipeRecommendationCard: View {
                 Label(shoppingSummaryText, systemImage: shoppingSummaryIcon)
                     .font(.caption)
                     .foregroundStyle(shoppingSummaryColor)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                    .padding(.top, 6)
+                    .fixedSize(horizontal: false, vertical: true)
                     .accessibilityLabel(shoppingSummaryText)
 
                 if let primaryReasonText {
@@ -227,7 +231,9 @@ private struct RecipeRecommendationCard: View {
 
     private var compactFactColumns: [GridItem] {
         [
-            GridItem(.adaptive(minimum: 84), spacing: 8)
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8)
         ]
     }
 
@@ -281,20 +287,32 @@ private struct RecipeRecommendationCard: View {
 /// Shows one compact recommendation fact without expanding the result card.
 private struct CompactRecommendationFact: View {
 
-    let text: String
+    let value: String
+    let label: String
     let systemImage: String
     let accessibilityLabel: String
 
     var body: some View {
-        Label {
-            Text(text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
-        } icon: {
+        VStack(spacing: 4) {
             Image(systemName: systemImage)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .lineLimit(1)
+
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 4)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 8))
         .accessibilityLabel(accessibilityLabel)
     }
 }
