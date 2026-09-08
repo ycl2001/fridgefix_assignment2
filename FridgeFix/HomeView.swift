@@ -188,8 +188,8 @@ private struct HomePrimaryActionCard: View {
                 .accessibilityHidden(true)
 
             Text("What can I cook?")
-                .font(.headline)
-                .foregroundStyle(.primary)
+                .font(.subheadline)
+                .fontWeight(.semibold)
                 .lineLimit(2)
                 .minimumScaleFactor(0.85)
 
@@ -200,14 +200,16 @@ private struct HomePrimaryActionCard: View {
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
         }
-        .frame(minHeight: 50)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 14)
+        .frame(height: 46)
         .background(FridgeFixTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay {
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(FridgeFixTheme.primaryAccent.opacity(0.22), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    FridgeFixTheme.primaryAccent.opacity(0.22),
+                    lineWidth: 1
+                )
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("What can I cook?")
