@@ -307,11 +307,11 @@ private struct HomeRecommendationCard: View {
 
             Label(
                 recommendation.suitability.readiness.displayName,
-                systemImage: "checkmark.circle"
+                systemImage: readinessIcon
             )
             .font(.caption)
             .fontWeight(.semibold)
-            .foregroundStyle(FridgeFixTheme.brandAccent)
+            .foregroundStyle(readinessColor)
 
             Text(recommendation.recipe.name)
                 .fridgeFixCardTitle()
@@ -336,9 +336,10 @@ private struct HomeRecommendationCard: View {
 
             if !recommendation.suitability.missingIngredients.isEmpty {
                 Label(
-                    "\(recommendation.suitability.missingIngredients.count) ingredient needed",
+                    missingShoppingText,
                     systemImage: "cart"
                 )
+                .foregroundStyle(.orange)
             }
         }
         .font(.caption)
@@ -347,6 +348,35 @@ private struct HomeRecommendationCard: View {
         .padding(FridgeFixTheme.cardPadding)
         .background(FridgeFixTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: FridgeFixTheme.cardCornerRadius))
+    }
+
+    private var readinessIcon: String {
+        switch recommendation.suitability.readiness {
+        case .readyToCook:
+            return "checkmark.circle.fill"
+        case .almostReady:
+            return "arrow.triangle.2.circlepath.circle.fill"
+        case .needsOneToTwoIngredients:
+            return "cart.circle.fill"
+        }
+    }
+
+    private var readinessColor: Color {
+        switch recommendation.suitability.readiness {
+        case .readyToCook:
+            return .green
+        case .almostReady:
+            return FridgeFixTheme.brandAccent
+        case .needsOneToTwoIngredients:
+            return .orange
+        }
+    }
+
+    private var missingShoppingText: String {
+        let missingIngredientCount = recommendation.suitability.missingIngredients.count
+        return missingIngredientCount == 1
+            ? "1 ingredient needed"
+            : "\(missingIngredientCount) ingredients needed"
     }
 }
 
