@@ -36,12 +36,16 @@ struct RecipePhotoView: View {
     @ViewBuilder
     private var photoContent: some View {
         if let photoName = recipe.localPhotoName {
-            Image(photoName)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity)
-                .frame(height: height)
-                .clipped()
+            GeometryReader { proxy in
+                Image(photoName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(
+                        width: proxy.size.width,
+                        height: proxy.size.height
+                    )
+                    .clipped()
+            }
         } else {
             ZStack {
                 FridgeFixTheme.cardBackground
