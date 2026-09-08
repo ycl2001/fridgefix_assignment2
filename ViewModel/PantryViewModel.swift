@@ -22,6 +22,8 @@ final class PantryViewModel: ObservableObject {
     @Published var ingredientBeingEditedForExpiry: PantryIngredient?
     @Published var editedIngredientHasExpiryDate = false
     @Published var editedIngredientExpiryDate = Date()
+    @Published var searchText = ""
+    @Published var selectedCategory: IngredientSubstitutionCategory?
 
     private let pantryRepository: any PantryRepository
 
@@ -52,6 +54,45 @@ final class PantryViewModel: ObservableObject {
     /// Returns ingredients that expire today or within the next two days.
     var ingredientsExpiringSoon: [PantryIngredient] {
         ingredients.filter { $0.isExpiringSoon }
+    }
+
+    /// Returns pantry ingredients matching the current search and category filters.
+    var visibleIngredients: [PantryIngredient] {
+        ingredients.filter { ingredient in
+            matchesSearch(ingredient) && matchesSelectedCategory(ingredient)
+        }
+    }
+
+    /// Returns visible ingredients that expire today or within the next two days.
+    var visibleIngredientsExpiringSoon: [PantryIngredient] {
+        visibleIngredients.filter { $0.isExpiringSoon }
+    }
+
+    /// Returns visible ingredients that are not already represented as urgent.
+    var visibleOtherIngredients: [PantryIngredient] {
+        visibleIngredients.filter { !$0.isExpiringSoon }
+    }
+
+    /// Returns ingredient categories currently represented in the pantry.
+    var availableCategoryFilters: [IngredientSubstitutionCategory] {
+        let pantryCategories = Set(
+            ingredients.map(\.substitutionCategory)
+        )
+
+        return IngredientSubstitutionCategory.allCases.filter {
+            pantryCategories.contains($0)
+        }
+    }
+
+    /// Indicates whether search or category filters are currently active.
+    var hasActiveFilters: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        selectedCategory != nil
+    }
+
+    /// Indicates that filter criteria are hiding all available pantry ingredients.
+    var isShowingFilteredEmptyState: Bool {
+        !ingredients.isEmpty && visibleIngredients.isEmpty
     }
 
     /// Indicates whether the user has enough pantry information to continue.
@@ -177,6 +218,12 @@ final class PantryViewModel: ObservableObject {
         newIngredientExpiryDate = Date()
     }
 
+    /// Clears all pantry browsing filters.
+    func clearFilters() {
+        searchText = ""
+        selectedCategory = nil
+    }
+
     private func ingredientIDValue(for name: String) -> String {
         name
             .lowercased()
@@ -186,6 +233,32 @@ final class PantryViewModel: ObservableObject {
                 options: .regularExpression
             )
             .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+    }
+
+    private func matchesSearch(_ ingredient: PantryIngredient) -> Bool {
+        let trimmedSearchText = searchText.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        guard !trimmedSearchText.isEmpty else {
+            return true
+        }
+
+        return ingredient.name.localizedCaseInsensitiveContains(
+            trimmedSearchText
+        ) ||
+        ingredient.substitutionCategory.displayName
+            .localizedCaseInsensitiveContains(trimmedSearchText)
+    }
+
+    private func matchesSelectedCategory(
+        _ ingredient: PantryIngredient
+    ) -> Bool {
+        guard let selectedCategory else {
+            return true
+        }
+
+        return ingredient.substitutionCategory == selectedCategory
     }
 
     private func recoveryMessage(for error: Error) -> String {
