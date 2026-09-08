@@ -117,7 +117,7 @@ struct RecipeDetailView: View {
                 )
             }
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
 
             Text(recommendation.suitability.explanation)
                 .font(.subheadline)
@@ -251,7 +251,7 @@ struct RecipeDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Feedback changes options for this cooking session only.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 8) {
@@ -270,7 +270,7 @@ struct RecipeDetailView: View {
                 if let feedbackMessage {
                     Label(feedbackMessage, systemImage: "checkmark.circle")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -508,7 +508,7 @@ private struct SuitabilityIndicator: View {
 
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(7)
@@ -589,7 +589,7 @@ private struct RecommendationReasonRow: View {
     var body: some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -616,7 +616,7 @@ private struct IngredientAvailabilityRow: View {
 
                 Text(detail)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

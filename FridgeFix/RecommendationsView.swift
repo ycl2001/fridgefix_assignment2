@@ -64,7 +64,7 @@ struct RecommendationsView: View {
                 .fridgeFixSectionTitle()
             Text("Checking your pantry, available time, preferences, and cooking constraints.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }
@@ -78,14 +78,14 @@ struct RecommendationsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Ranked using your pantry, available time, preferences, and cooking constraints.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
 
                     Label(
                         "Use Back to adjust your cooking situation.",
                         systemImage: "slider.horizontal.3"
                     )
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                 }
                 .padding(.vertical, 4)
                 .listRowBackground(FridgeFixTheme.cardBackground)
@@ -127,7 +127,7 @@ struct RecommendationsView: View {
                                 .fridgeFixSectionTitle()
                             Text(readiness.sectionDescription)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(FridgeFixTheme.secondaryText)
                                 .textCase(nil)
                         }
                     }
@@ -138,7 +138,7 @@ struct RecommendationsView: View {
         .scrollContentBackground(.hidden)
         .background(FridgeFixTheme.pageBackground)
         .safeAreaInset(edge: .bottom) {
-            Color.clear.frame(height: 12)
+            Color.clear.frame(height: 32)
         }
     }
 
@@ -172,7 +172,7 @@ struct RecommendationsView: View {
                 )
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
             .multilineTextAlignment(.leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -222,7 +222,7 @@ private struct RecipeRecommendationCard: View {
                         systemImage: primaryReasonIcon
                     )
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityLabel(primaryReasonText)
@@ -362,7 +362,7 @@ private struct CompactRecommendationFactColumn: View {
         VStack(spacing: 4) {
             Image(systemName: fact.systemImage)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
 
             Text(fact.value)
                 .font(.subheadline)
@@ -371,7 +371,7 @@ private struct CompactRecommendationFactColumn: View {
 
             Text(fact.label)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
@@ -448,7 +448,7 @@ private struct ReadinessGuideView: View {
 
                             Text(row.description)
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(FridgeFixTheme.secondaryText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -471,7 +471,7 @@ private struct NutritionBalanceLabel: View {
     var body: some View {
         Label(nutritionBalance.displayName, systemImage: iconName)
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FridgeFixTheme.secondaryText)
             .labelStyle(.iconOnly)
             .accessibilityLabel(nutritionBalance.displayName)
     }

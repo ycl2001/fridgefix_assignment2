@@ -69,7 +69,7 @@ struct PantryView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("See what you can realistically cook with the ingredients you already have.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
 
                     NavigationLink {
                         CookingContextView(
@@ -93,7 +93,7 @@ struct PantryView: View {
                             systemImage: "info.circle"
                         )
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                     }
                 }
                 .padding(.vertical, 6)
@@ -124,7 +124,7 @@ struct PantryView: View {
                         "No ingredients need urgent attention today.",
                         systemImage: "checkmark.circle"
                     )
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                 }
                 .listRowBackground(FridgeFixTheme.cardBackground)
             } else {
@@ -184,6 +184,9 @@ struct PantryView: View {
         }
         .scrollContentBackground(.hidden)
         .background(FridgeFixTheme.pageBackground)
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: 16)
+        }
     }
 
     private var otherIngredients: [PantryIngredient] {
@@ -216,33 +219,36 @@ private struct PantryIngredientRow: View {
 
                 Text(ingredient.substitutionCategory.displayName)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 if let expiresAt = ingredient.expiresAt {
                     Text("Expires \(expiresAt.formatted(date: .abbreviated, time: .omitted))")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                 }
             }
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 6) {
-                if isUrgent {
-                    Label("Use soon", systemImage: "clock")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-
-                Button {
-                    editExpiryDate()
-                } label: {
-                    Image(systemName: "calendar")
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel("Edit expiry date for \(ingredient.name)")
+            Button {
+                editExpiryDate()
+            } label: {
+                Image(systemName: "pencil.circle")
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
             }
+            .buttonStyle(.borderless)
+            .accessibilityLabel(expiryActionAccessibilityLabel)
+            .accessibilityHint("Changes the stored expiry date for this pantry ingredient.")
         }
+    }
+
+    private var expiryActionAccessibilityLabel: String {
+        if ingredient.expiresAt == nil {
+            return "Add expiry date for \(ingredient.name)"
+        }
+
+        return "Edit \(ingredient.name) expiry date"
     }
 }
 
@@ -322,7 +328,7 @@ private struct EditExpiryDateView: View {
                 Section("Ingredient") {
                     Text(ingredient.name)
                     Text(ingredient.substitutionCategory.displayName)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                 }
 
                 Section("Expiry") {

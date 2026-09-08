@@ -13,6 +13,8 @@ enum FridgeFixTheme {
     static let pageBackground = Color("AppBackground")
     static let cardBackground = Color("CardBackground")
     static let brandAccent = Color("BrandAccent")
+    static let primaryText = Color("PrimaryText")
+    static let secondaryText = Color("SecondaryText")
 
     static let cardCornerRadius: CGFloat = 16
     static let compactCornerRadius: CGFloat = 12
@@ -29,6 +31,7 @@ extension View {
         font(.title2)
             .fontDesign(.rounded)
             .fontWeight(.bold)
+            .foregroundStyle(FridgeFixTheme.primaryText)
     }
 
     /// Applies the rounded FridgeFix style used for section headings.
@@ -36,6 +39,7 @@ extension View {
         font(.headline)
             .fontDesign(.rounded)
             .fontWeight(.semibold)
+            .foregroundStyle(FridgeFixTheme.primaryText)
     }
 
     /// Applies the rounded FridgeFix style used for compact card titles.
@@ -43,6 +47,7 @@ extension View {
         font(.headline)
             .fontDesign(.rounded)
             .fontWeight(.semibold)
+            .foregroundStyle(FridgeFixTheme.primaryText)
     }
 
     /// Applies the rounded FridgeFix style used for primary actions.

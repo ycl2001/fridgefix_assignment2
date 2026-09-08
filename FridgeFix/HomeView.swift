@@ -26,6 +26,9 @@ struct HomeView: View {
                 .padding(FridgeFixTheme.screenPadding)
             }
             .background(FridgeFixTheme.pageBackground)
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 16)
+            }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
             .task {
@@ -48,7 +51,7 @@ struct HomeView: View {
 
                 Text("Make the most of what you already have.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -186,6 +189,7 @@ private struct HomePrimaryActionCard: View {
 
             Text("What can I cook?")
                 .fridgeFixPrimaryActionTitle()
+                .foregroundStyle(FridgeFixTheme.primaryText)
                 .lineLimit(1)
 
             Spacer(minLength: 8)
@@ -222,7 +226,7 @@ private struct HomeEmptyPantryCard: View {
 
                 Text("Add a few pantry ingredients before finding meal options.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 Label("Open Pantry", systemImage: "cabinet")
                     .font(.caption)
@@ -246,7 +250,7 @@ private struct HomeLoadingCard: View {
 
             Text("Finding realistic meal options...")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(FridgeFixTheme.cardPadding)
@@ -272,7 +276,7 @@ private struct HomeNoRecommendationsCard: View {
 
                 Text("Tell FridgeFix how much time you have and what you feel like eating.")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 Text("Get recommendations")
                     .font(.caption)
@@ -314,6 +318,12 @@ private struct HomeRecommendationCard: View {
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
+            Text(recommendation.suitability.explanation)
+                .font(.caption)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
+                .lineLimit(3, reservesSpace: true)
+                .fixedSize(horizontal: false, vertical: true)
+
             Label(
                 "\(recommendation.suitability.pantryMatchPercentage)% pantry match",
                 systemImage: "refrigerator"
@@ -332,7 +342,7 @@ private struct HomeRecommendationCard: View {
             }
         }
         .font(.caption)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(FridgeFixTheme.secondaryText)
         .frame(width: 220, alignment: .leading)
         .padding(FridgeFixTheme.cardPadding)
         .background(FridgeFixTheme.cardBackground)
@@ -359,7 +369,7 @@ private struct HomeUrgentIngredientRow<Action: View>: View {
 
                 Text(expiryDescription)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FridgeFixTheme.secondaryText)
 
                 Text("Use soon")
                     .font(.caption)
@@ -369,6 +379,9 @@ private struct HomeUrgentIngredientRow<Action: View>: View {
             Spacer(minLength: 8)
 
             action()
+                .font(.subheadline)
+                .fontDesign(.rounded)
+                .fontWeight(.semibold)
         }
         .padding(FridgeFixTheme.cardPadding)
         .background(FridgeFixTheme.cardBackground)
@@ -399,7 +412,7 @@ private struct HomeMessageCard: View {
 
             Text(message)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
 
             if let action {
                 Button {

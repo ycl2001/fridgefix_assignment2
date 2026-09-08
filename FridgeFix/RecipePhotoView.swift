@@ -49,12 +49,12 @@ struct RecipePhotoView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "fork.knife")
                         .font(.title2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
 
                     Text(recipe.name)
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .padding(.horizontal)

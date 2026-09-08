@@ -31,7 +31,7 @@ struct CookingContextView: View {
                 Section {
                     Text("Tell FridgeFix what cooking realistically looks like right now. Hard limits filter recipes; preferences only influence ranking.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                 }
 
                 Section {
@@ -143,7 +143,7 @@ struct CookingContextView: View {
                     )
                     Text("Practical recipes using urgent pantry ingredients may be ranked higher.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FridgeFixTheme.secondaryText)
                 } header: {
                     ContextSectionHeader(
                         title: "Expiry priority",
@@ -212,7 +212,7 @@ private struct ContextSectionHeader: View {
 
             Text(detail)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
                 .textCase(nil)
         }
         .textCase(nil)
