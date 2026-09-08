@@ -18,21 +18,27 @@ struct RecipeDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     private let feedbackUseCase = ApplySessionRecipeFeedbackUseCase()
+    private let suitabilityColumns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
 
     var body: some View {
         ScrollView {
-            VStack(spacing: -32) {
+            VStack(spacing: -20) {
                 RecipePhotoView(
                     recipe: recommendation.recipe,
-                    height: 300,
+                    height: 230,
                     cornerRadius: 0
                 )
+                .containerRelativeFrame(.horizontal)
 
                 contentSurface
             }
+            .containerRelativeFrame(.horizontal)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle(recommendation.recipe.name)
+        .navigationTitle("Recipe")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -52,7 +58,7 @@ struct RecipeDetailView: View {
     }
 
     private var contentSurface: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 16) {
             Capsule()
                 .fill(Color.secondary.opacity(0.25))
                 .frame(width: 44, height: 5)
@@ -66,17 +72,17 @@ struct RecipeDetailView: View {
             directionsSection
             feedbackSection
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 32)
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 24)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.systemBackground))
         .clipShape(
             UnevenRoundedRectangle(
-                topLeadingRadius: 30,
+                topLeadingRadius: 24,
                 bottomLeadingRadius: 0,
                 bottomTrailingRadius: 0,
-                topTrailingRadius: 30,
+                topTrailingRadius: 24,
                 style: .continuous
             )
         )
@@ -90,7 +96,7 @@ struct RecipeDetailView: View {
             )
 
             Text(recommendation.recipe.name)
-                .font(.largeTitle)
+                .font(.title2)
                 .fontWeight(.bold)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -113,7 +119,7 @@ struct RecipeDetailView: View {
             .foregroundStyle(.secondary)
 
             Text(recommendation.suitability.explanation)
-                .font(.body)
+                .font(.subheadline)
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -121,9 +127,7 @@ struct RecipeDetailView: View {
 
     private var suitabilityIndicatorsSection: some View {
         LazyVGrid(
-            columns: [
-                GridItem(.adaptive(minimum: 72), spacing: 10)
-            ],
+            columns: suitabilityColumns,
             alignment: .leading,
             spacing: 10
         ) {
@@ -248,36 +252,19 @@ struct RecipeDetailView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                HStack(spacing: 10) {
-                    Button {
-                        applyFeedback(.saved)
-                    } label: {
-                        Label(isSaved ? "Saved" : "Save", systemImage: "heart")
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) {
+                        saveButton
+                        skipButton
+                        feedbackMenu
                     }
-                    .buttonStyle(.borderedProminent)
 
-                    Button {
-                        applyFeedback(.skipped)
-                    } label: {
-                        Label("Skip", systemImage: "forward")
+                    VStack(spacing: 8) {
+                        saveButton
+                        skipButton
+                        feedbackMenu
                     }
-                    .buttonStyle(.bordered)
-
-                    Menu {
-                        ForEach(
-                            SessionRecipeFeedbackReason.allCases,
-                            id: \.rawValue
-                        ) { reason in
-                            Button(reason.displayText) {
-                                applyFeedback(.reported(reason))
-                            }
-                        }
-                    } label: {
-                        Label("Feedback", systemImage: "text.bubble")
-                    }
-                    .buttonStyle(.bordered)
                 }
-                .fixedSize(horizontal: false, vertical: true)
 
                 if let feedbackMessage {
                     Label(feedbackMessage, systemImage: "checkmark.circle")
@@ -287,6 +274,46 @@ struct RecipeDetailView: View {
                 }
             }
         }
+    }
+
+    private var saveButton: some View {
+        Button {
+            applyFeedback(.saved)
+        } label: {
+            Label(isSaved ? "Saved" : "Save", systemImage: "heart")
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+    }
+
+    private var skipButton: some View {
+        Button {
+            applyFeedback(.skipped)
+        } label: {
+            Label("Skip", systemImage: "forward")
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+        }
+        .buttonStyle(.bordered)
+    }
+
+    private var feedbackMenu: some View {
+        Menu {
+            ForEach(
+                SessionRecipeFeedbackReason.allCases,
+                id: \.rawValue
+            ) { reason in
+                Button(reason.displayText) {
+                    applyFeedback(.reported(reason))
+                }
+            }
+        } label: {
+            Label("Feedback", systemImage: "text.bubble")
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+        }
+        .buttonStyle(.bordered)
     }
 
     private func applyFeedback(
@@ -465,14 +492,14 @@ private struct SuitabilityIndicator: View {
     let tint: Color
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 3) {
             Image(systemName: systemImage)
-                .font(.headline)
+                .font(.caption)
                 .foregroundStyle(tint)
                 .accessibilityHidden(true)
 
             Text(value)
-                .font(.headline)
+                .font(.subheadline)
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
@@ -483,11 +510,10 @@ private struct SuitabilityIndicator: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .frame(minHeight: 86)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 10)
+        .padding(7)
+        .frame(minHeight: 68)
         .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }
