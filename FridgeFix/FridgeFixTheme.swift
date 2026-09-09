@@ -2,7 +2,7 @@
 //  FridgeFixTheme.swift
 //  FridgeFix
 //
-//  Created by Codex on 8/9/2026.
+//  Created by Yen-Chun Liu on 8/9/2026.
 //
 
 import SwiftUI
