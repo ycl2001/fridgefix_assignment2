@@ -14,6 +14,7 @@ final class RecommendationsViewModel: ObservableObject {
 
     @Published private(set) var recommendations: [RecipeRecommendation] = []
     @Published private(set) var errorMessage: String?
+    @Published private(set) var recoveryActions: [String] = []
     @Published private(set) var isLoading = false
     @Published private(set) var currentContext: CookingContext?
     @Published var session = RecommendationSession()
@@ -38,6 +39,7 @@ final class RecommendationsViewModel: ObservableObject {
     ) {
         isLoading = true
         errorMessage = nil
+        recoveryActions = []
         currentContext = context
 
         do {
@@ -45,36 +47,18 @@ final class RecommendationsViewModel: ObservableObject {
                 context: context,
                 session: session
             )
-        } catch RecommendationGenerationError.pantryNeedsIngredients {
+            recoveryActions = []
+        } catch let recommendationError as RecommendationGenerationError {
             recommendations = []
-            errorMessage = """
-            Your pantry is empty.
-            Add ingredients before looking for meals.
-            """
-        } catch RecommendationGenerationError.pantryInformationUnavailable {
-            recommendations = []
-            errorMessage = """
-            FridgeFix could not load your pantry.
-            Please try again.
-            """
-        } catch RecommendationGenerationError.recipeCatalogueUnavailable {
-            recommendations = []
-            errorMessage = """
-            FridgeFix could not load its recipe catalogue.
-            Please try again.
-            """
-        } catch RecommendationGenerationError.noRecipesMeetCookingContext {
-            recommendations = []
-            errorMessage = """
-            No meals match your current cooking situation.
-            Try changing your cuisine, taste, time, or difficulty preferences.
-            """
+            errorMessage = recoveryMessage(for: recommendationError)
+            recoveryActions = recoveryActions(for: recommendationError)
         } catch {
             recommendations = []
             errorMessage = """
             FridgeFix could not generate recommendations.
             Please try again.
             """
+            recoveryActions = ["Try again in a moment"]
         }
 
         isLoading = false
@@ -91,5 +75,42 @@ final class RecommendationsViewModel: ObservableObject {
         }
 
         generateRecommendations(for: currentContext)
+    }
+
+    private func recoveryMessage(
+        for error: RecommendationGenerationError
+    ) -> String {
+        [
+            error.errorDescription,
+            error.recoverySuggestion
+        ]
+        .compactMap { $0 }
+        .joined(separator: "\n")
+    }
+
+    private func recoveryActions(
+        for error: RecommendationGenerationError
+    ) -> [String] {
+        switch error {
+        case .pantryInformationUnavailable:
+            return ["Refresh your pantry", "Try again"]
+        case .pantryNeedsIngredients:
+            return ["Add pantry ingredients", "Try again after adding food"]
+        case .recipeCatalogueUnavailable:
+            return ["Try again in a moment"]
+        case .recipeInformationIncomplete:
+            return ["Try again after recipe information is updated"]
+        case .filtersExcludeFeasibleRecipes:
+            return [
+                "Relax cuisine or taste preferences",
+                "Increase available cooking time or difficulty",
+                "Review dietary restrictions"
+            ]
+        case .noRealisticallySuitableRecipes:
+            return [
+                "Add more pantry ingredients",
+                "Allow meals that need one or two additions"
+            ]
+        }
     }
 }

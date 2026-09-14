@@ -71,12 +71,56 @@ struct GenerateContextAwareRecommendationsUseCaseTests {
             pantryRepository: LocalPantryRepository()
         )
 
-        #expect(throws: RecommendationGenerationError.self) {
+        #expect(throws: RecommendationGenerationError.filtersExcludeFeasibleRecipes) {
             _ = try useCase.execute(
                 context: makeContext(
                     maximumCookingTime: .fifteenMinutes
                 )
             )
+        }
+    }
+
+    @Test
+    func missingPantryIngredientsProduceRealisticMealsFailure() {
+        let recipe = makeRecipe(
+            id: "spinach-rice",
+            name: "Spinach Rice",
+            requirements: [
+                RecipeIngredientRequirement(
+                    ingredientName: "Spinach",
+                    isEssential: true,
+                    substitutionCategory: .leafyGreen
+                )
+            ]
+        )
+        let useCase = makeUseCase(
+            recipes: [recipe],
+            pantry: [
+                makePantryIngredient(name: "Rice")
+            ]
+        )
+
+        #expect(throws: RecommendationGenerationError.noRealisticallySuitableRecipes) {
+            _ = try useCase.execute(context: makeContext())
+        }
+    }
+
+    @Test
+    func incompleteRecipeInformationProducesSpecificFailure() {
+        let incompleteRecipe = makeRecipe(
+            id: "incomplete-rice",
+            name: "Incomplete Rice",
+            requirements: []
+        )
+        let useCase = makeUseCase(
+            recipes: [incompleteRecipe],
+            pantry: [
+                makePantryIngredient(name: "Rice")
+            ]
+        )
+
+        #expect(throws: RecommendationGenerationError.recipeInformationIncomplete) {
+            _ = try useCase.execute(context: makeContext())
         }
     }
 
