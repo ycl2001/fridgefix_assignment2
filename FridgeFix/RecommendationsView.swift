@@ -167,30 +167,25 @@ struct RecommendationsView: View {
         } description: {
             Text(errorMessage)
         } actions: {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Try this next:")
-                    .fridgeFixSectionTitle()
+            if !viewModel.recoveryActions.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Try this next:")
+                        .fridgeFixSectionTitle()
 
-                Label(
-                    "Relax cuisine or taste preferences",
-                    systemImage: "1.circle"
-                )
-                Label(
-                    "Increase available cooking time or difficulty",
-                    systemImage: "2.circle"
-                )
-                Label(
-                    "Turn off expiry prioritisation",
-                    systemImage: "3.circle"
-                )
-                Label(
-                    "Add more pantry ingredients",
-                    systemImage: "4.circle"
-                )
+                    ForEach(
+                        Array(viewModel.recoveryActions.enumerated()),
+                        id: \.offset
+                    ) { index, action in
+                        Label(
+                            action,
+                            systemImage: "\(index + 1).circle"
+                        )
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(FridgeFixTheme.secondaryText)
+                .multilineTextAlignment(.leading)
             }
-            .font(.caption)
-            .foregroundStyle(FridgeFixTheme.secondaryText)
-            .multilineTextAlignment(.leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(FridgeFixTheme.pageBackground)

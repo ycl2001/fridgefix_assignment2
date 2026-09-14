@@ -36,7 +36,7 @@ struct GenerateContextAwareRecommendationsUseCase {
     /// recipes and adjust ordering during the current recommendation flow.
     /// - Returns: Suitable recipes ordered from highest to lowest priority.
     /// - Throws: `RecommendationGenerationError` when required data is unavailable
-    /// or no recipe meets the user's hard constraints.
+    /// or the current context cannot produce realistic recommendations.
     func execute(
         context: CookingContext,
         session: RecommendationSession? = nil
@@ -72,9 +72,16 @@ struct GenerateContextAwareRecommendationsUseCase {
             recipesByID: recipesByID
         )
         var recommendations: [RecipeRecommendation] = []
+        var exclusionReasons: [RecipeExclusionReason] = []
+        var skippedIncompleteRecipeCount = 0
 
         for recipe in recipes {
             guard !sessionInfluence.excludes(recipe) else {
+                continue
+            }
+
+            guard recipe.hasCompleteRecommendationInformation else {
+                skippedIncompleteRecipeCount += 1
                 continue
             }
 
@@ -85,6 +92,9 @@ struct GenerateContextAwareRecommendationsUseCase {
             )
 
             guard case .suitable(let suitability) = outcome else {
+                if case .excluded(let reason) = outcome {
+                    exclusionReasons.append(reason)
+                }
                 continue
             }
 
@@ -100,7 +110,10 @@ struct GenerateContextAwareRecommendationsUseCase {
         }
 
         guard !recommendations.isEmpty else {
-            throw RecommendationGenerationError.noRecipesMeetCookingContext
+            throw RecommendationGenerationError.emptyRecommendationResult(
+                exclusionReasons: exclusionReasons,
+                skippedIncompleteRecipeCount: skippedIncompleteRecipeCount
+            )
         }
 
         return recommendations.sorted {
@@ -439,10 +452,89 @@ private struct SessionRecommendationInfluence {
 }
 
 /// Describes failures that prevent FridgeFix from generating recommendations.
-
-enum RecommendationGenerationError: Error {
+enum RecommendationGenerationError: Error, Equatable, LocalizedError {
     case pantryInformationUnavailable
     case pantryNeedsIngredients
     case recipeCatalogueUnavailable
-    case noRecipesMeetCookingContext
+    case recipeInformationIncomplete
+    case filtersExcludeFeasibleRecipes
+    case noRealisticallySuitableRecipes
+
+    /// Selects the clearest domain failure for a recommendation run that
+    /// completed evaluation but produced no user-facing meal options.
+    static func emptyRecommendationResult(
+        exclusionReasons: [RecipeExclusionReason],
+        skippedIncompleteRecipeCount: Int
+    ) -> RecommendationGenerationError {
+        guard !exclusionReasons.isEmpty else {
+            return skippedIncompleteRecipeCount > 0
+                ? .recipeInformationIncomplete
+                : .noRealisticallySuitableRecipes
+        }
+
+        if exclusionReasons.allSatisfy(\.isContextFilterExclusion) {
+            return .filtersExcludeFeasibleRecipes
+        }
+
+        return .noRealisticallySuitableRecipes
+    }
+
+    var errorDescription: String? {
+        switch self {
+        case .pantryInformationUnavailable:
+            return "FridgeFix could not load your pantry."
+        case .pantryNeedsIngredients:
+            return "Your pantry is empty."
+        case .recipeCatalogueUnavailable:
+            return "FridgeFix could not load its recipe catalogue."
+        case .recipeInformationIncomplete:
+            return "Recipe information is incomplete."
+        case .filtersExcludeFeasibleRecipes:
+            return "Your cooking filters ruled out the available meals."
+        case .noRealisticallySuitableRecipes:
+            return "No realistic meals match your pantry right now."
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .pantryInformationUnavailable:
+            return "Refresh your pantry and try again."
+        case .pantryNeedsIngredients:
+            return "Add a few ingredients before looking for meals."
+        case .recipeCatalogueUnavailable:
+            return "Try again in a moment."
+        case .recipeInformationIncomplete:
+            return "Try again after the recipe catalogue has been updated."
+        case .filtersExcludeFeasibleRecipes:
+            return "Relax your time, difficulty, cuisine, taste, or dietary preferences."
+        case .noRealisticallySuitableRecipes:
+            return "Add more pantry ingredients or allow meals that need one or two additions."
+        }
+    }
+}
+
+private extension Recipe {
+
+    var hasCompleteRecommendationInformation: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        totalCookingTimeInMinutes > 0 &&
+        !ingredientRequirements.isEmpty &&
+        !instructions.isEmpty
+    }
+}
+
+private extension RecipeExclusionReason {
+
+    var isContextFilterExclusion: Bool {
+        switch self {
+        case .dietaryRestrictionConflict,
+             .cookingTimeExceedsLimit,
+             .difficultyExceedsLimit:
+            return true
+        case .essentialIngredientUnavailable,
+             .requiresMoreThanTwoIngredients:
+            return false
+        }
+    }
 }

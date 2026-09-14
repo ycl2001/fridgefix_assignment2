@@ -54,8 +54,12 @@ struct RecipeSuitability: Equatable {
     let explanation: String
 }
 
-/// Describes why a recipe cannot currently be recommended.
-enum RecipeExclusionReason: Error, Equatable {
+/// Explains a normal recommendation exclusion, not a thrown failure.
+///
+/// Individual recipes can be ruled out because they do not fit the user's
+/// current context or pantry. The recommendation flow reports these as
+/// evaluation outcomes so one excluded recipe does not fail the whole request.
+enum RecipeExclusionReason: Equatable {
     case dietaryRestrictionConflict
     case cookingTimeExceedsLimit
     case difficultyExceedsLimit
